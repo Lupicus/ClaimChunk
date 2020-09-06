@@ -1,0 +1,15 @@
+{
+	"item.cc.claim_block": "クレームブロック",
+	"block.cc.claim_block": "クレームブロック",
+	"cc.message.block.not_owner": "あなたはこのブロックを所有していません",
+	"cc.message.block.access": "アクセスできません",
+	"cc.message.spawn": "このチャンクはスポーンするには近すぎます",
+	"cc.message.claim_limit": "申し立ての上限に達しました",
+	"cc.message.claim": "このチャンクを要求しました",
+	"cc.message.unclaim": "あなたはこのチャンクを要求しませんでした",
+	"cc.message.claimed.chunk": "このチャンクは要求されています",
+	"cc.message.noclaims.you": "申し立てはありません",
+	"cc.message.noclaims": "クレームなし",
+	"cc.gui.access": "アクセス",
+	"cc.gui.enable": "有効にする"
+}

@@ -1,0 +1,15 @@
+{
+	"item.cc.claim_block": "Krev blokk",
+	"block.cc.claim_block": "Krev blokk",
+	"cc.message.block.not_owner": "Du eier ikke denne blokken",
+	"cc.message.block.access": "Du har ikke tilgang",
+	"cc.message.spawn": "Denne klumpen er for nær å gyte",
+	"cc.message.claim_limit": "Du nådde kravgrensen",
+	"cc.message.claim": "Du hevdet denne delen",
+	"cc.message.unclaim": "Du krevde ikke denne delen",
+	"cc.message.claimed.chunk": "Dette er blitt hevdet",
+	"cc.message.noclaims.you": "Du har ingen krav",
+	"cc.message.noclaims": "Ingen krav",
+	"cc.gui.access": "Adgang",
+	"cc.gui.enable": "Muliggjøre"
+}

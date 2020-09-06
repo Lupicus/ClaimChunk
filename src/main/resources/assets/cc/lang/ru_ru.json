@@ -1,0 +1,15 @@
+{
+	"item.cc.claim_block": "Блокировка претензии",
+	"block.cc.claim_block": "Блокировка претензии",
+	"cc.message.block.not_owner": "Вам не принадлежит этот блок",
+	"cc.message.block.access": "У вас нет доступа",
+	"cc.message.spawn": "Этот кусок слишком близок к появлению",
+	"cc.message.claim_limit": "Вы достигли лимита требований",
+	"cc.message.claim": "Вы заявили права на этот кусок",
+	"cc.message.unclaim": "Вы невостребовали этот кусок",
+	"cc.message.claimed.chunk": "Этот кусок был заявлен",
+	"cc.message.noclaims.you": "У вас нет претензий",
+	"cc.message.noclaims": "Претензий нет",
+	"cc.gui.access": "Доступ",
+	"cc.gui.enable": "включить"
+}

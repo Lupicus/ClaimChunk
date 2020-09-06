@@ -1,0 +1,15 @@
+{
+	"item.cc.claim_block": "दावा ब्लॉक",
+	"block.cc.claim_block": "दावा ब्लॉक",
+	"cc.message.block.not_owner": "आप इस ब्लॉक के स्वामी नहीं हैं",
+	"cc.message.block.access": "आपके पास पहुंच नहीं है",
+	"cc.message.spawn": "यह हिस्सा स्पॉन के बहुत करीब है",
+	"cc.message.claim_limit": "आप अपनी दावा सीमा पर पहुँच गए",
+	"cc.message.claim": "आपने इस चंक का दावा किया है",
+	"cc.message.unclaim": "आपने इस चैंक को लावारिस कर दिया",
+	"cc.message.claimed.chunk": "इस बात का दावा किया गया है",
+	"cc.message.noclaims.you": "आपका कोई दावा नहीं है",
+	"cc.message.noclaims": "कोई दावा नहीं",
+	"cc.gui.access": "पहुंच",
+	"cc.gui.enable": "सक्षम करें"
+}

@@ -1,0 +1,15 @@
+{
+	"item.cc.claim_block": "索赔阻止",
+	"block.cc.claim_block": "索赔阻止",
+	"cc.message.block.not_owner": "您没有这个街区",
+	"cc.message.block.access": "您无权访问",
+	"cc.message.spawn": "这个块太近了，无法生成",
+	"cc.message.claim_limit": "您已达到申领限额",
+	"cc.message.claim": "你声称这块",
+	"cc.message.unclaim": "您无人认领这块",
+	"cc.message.claimed.chunk": "该块已被声明",
+	"cc.message.noclaims.you": "您没有要求",
+	"cc.message.noclaims": "无索偿",
+	"cc.gui.access": "访问",
+	"cc.gui.enable": "启用"
+}

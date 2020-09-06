@@ -1,0 +1,24 @@
+modLoader="javafml"
+loaderVersion="[32,)"
+license="MIT License"
+[[mods]]
+modId="cc"
+version="${file.jarVersion}"
+displayName="Claim Chunk"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/claim-chunk"
+logoFile="logo.png"
+authors="Lupicus, MacTso"
+description='''Claim Chunk'''
+[[dependencies.cc]]
+    modId="forge"
+    mandatory=true
+    versionRange="[32,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.cc]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.16.1]"
+    ordering="NONE"
+    side="BOTH"

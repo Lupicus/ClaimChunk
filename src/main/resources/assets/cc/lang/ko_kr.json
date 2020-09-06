@@ -1,0 +1,15 @@
+{
+	"item.cc.claim_block": "클레임 블록",
+	"block.cc.claim_block": "클레임 블록",
+	"cc.message.block.not_owner": "이 블록을 소유하지 않았습니다.",
+	"cc.message.block.access": "당신은 액세스 권한이 없습니다",
+	"cc.message.spawn": "이 청크는 생성하기에 너무 가깝습니다.",
+	"cc.message.claim_limit": "청구 한도에 도달했습니다.",
+	"cc.message.claim": "이 청크를 요청했습니다.",
+	"cc.message.unclaim": "이 청크를 취소했습니다.",
+	"cc.message.claimed.chunk": "이 청크가 청구되었습니다.",
+	"cc.message.noclaims.you": "클레임이 없습니다.",
+	"cc.message.noclaims": "클레임 없음",
+	"cc.gui.access": "접속하다",
+	"cc.gui.enable": "활성화"
+}

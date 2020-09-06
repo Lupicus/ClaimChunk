@@ -1,0 +1,15 @@
+{
+	"item.cc.claim_block": "Anspruchsblock",
+	"block.cc.claim_block": "Anspruchsblock",
+	"cc.message.block.not_owner": "Sie besitzen diesen Block nicht",
+	"cc.message.block.access": "Sie haben keinen Zugang",
+	"cc.message.spawn": "Dieser Brocken ist zu nahe, um zu laichen",
+	"cc.message.claim_limit": "Sie haben Ihr Anspruchslimit erreicht",
+	"cc.message.claim": "Sie haben dieses Stück beansprucht",
+	"cc.message.unclaim": "Sie haben dieses Stück nicht beansprucht",
+	"cc.message.claimed.chunk": "Dieses Stück wurde beansprucht",
+	"cc.message.noclaims.you": "Sie haben keine Ansprüche",
+	"cc.message.noclaims": "Keine Forderungen",
+	"cc.gui.access": "Zugriff",
+	"cc.gui.enable": "Aktivieren"
+}

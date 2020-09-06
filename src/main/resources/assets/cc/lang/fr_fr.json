@@ -1,0 +1,15 @@
+{
+	"item.cc.claim_block": "Bloc de réclamation",
+	"block.cc.claim_block": "Bloc de réclamation",
+	"cc.message.block.not_owner": "Vous ne possédez pas ce bloc",
+	"cc.message.block.access": "Tu n'as pas accès",
+	"cc.message.spawn": "Ce morceau est trop proche pour apparaître",
+	"cc.message.claim_limit": "Vous avez atteint votre limite de réclamation",
+	"cc.message.claim": "Vous avez réclamé ce morceau",
+	"cc.message.unclaim": "Vous n'avez pas réclamé ce morceau",
+	"cc.message.claimed.chunk": "Ce morceau a été réclamé",
+	"cc.message.noclaims.you": "Vous n'avez aucune réclamation",
+	"cc.message.noclaims": "Aucunes réclamations",
+	"cc.gui.access": "Accès",
+	"cc.gui.enable": "Activer"
+}

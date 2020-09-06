@@ -1,0 +1,15 @@
+{
+	"item.cc.claim_block": "Bloque de reclamo",
+	"block.cc.claim_block": "Bloque de reclamo",
+	"cc.message.block.not_owner": "No eres dueño de este bloque",
+	"cc.message.block.access": "No tienes acceso",
+	"cc.message.spawn": "Este fragmento está demasiado cerca para generar",
+	"cc.message.claim_limit": "Alcanzó su límite de reclamos",
+	"cc.message.claim": "Reclamaste este trozo",
+	"cc.message.unclaim": "Reclamaste este trozo",
+	"cc.message.claimed.chunk": "Este fragmento ha sido reclamado",
+	"cc.message.noclaims.you": "No tienes reclamos",
+	"cc.message.noclaims": "Sin reclamos",
+	"cc.gui.access": "Acceso",
+	"cc.gui.enable": "Habilitar"
+}

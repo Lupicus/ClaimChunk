@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "enabled=true": { "model": "cc:block/claim_block" },
+    "enabled=false": { "model": "cc:block/claim_block_off" }
+  }
+}
