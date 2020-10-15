@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.lupicus.cc.Main;
+import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
 
@@ -18,7 +19,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.ExplosionEvent;
@@ -47,7 +47,7 @@ public class BlockEvents
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || player.hasPermissionLevel(3))
 			return;
-		player.sendStatusMessage(new TranslationTextComponent("cc.message.claimed.chunk"), true);
+		player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 		if (event.isCancelable())
 			event.setCanceled(true);
 	}
@@ -107,7 +107,7 @@ public class BlockEvents
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || player.hasPermissionLevel(3))
 			return;
-		player.sendStatusMessage(new TranslationTextComponent("cc.message.claimed.chunk"), true);
+		player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 		if (event.isCancelable())
 			event.setCanceled(true);
 	}
@@ -121,16 +121,22 @@ public class BlockEvents
 		PlayerEntity player = (PlayerEntity) entity;
 		World world = player.world;
 		if (world.isRemote)
+		{
+			// let server decide
+			if (event.isCancelable())
+				event.setCanceled(true);
 			return;
+		}
 		boolean flag = false;
 		ChunkPos prev = null;
+		ClaimInfo info = null;
 		for (BlockSnapshot s : event.getReplacedBlockSnapshots())
 		{
 			ChunkPos pos = new ChunkPos(s.getPos());
 			if (!pos.equals(prev))
 			{
 				prev = pos;
-				ClaimInfo info = ClaimManager.get(world, pos);
+				info = ClaimManager.get(world, pos);
 				if (info.okPerm(player) || player.hasPermissionLevel(3))
 					continue;
 				flag = true;
@@ -139,7 +145,7 @@ public class BlockEvents
 		}
 		if (flag && event.isCancelable())
 		{
-			player.sendStatusMessage(new TranslationTextComponent("cc.message.claimed.chunk"), true);
+			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
 		}
 	}

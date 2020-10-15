@@ -12,6 +12,8 @@ import com.lupicus.cc.tileentity.ClaimTileEntity;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -30,6 +32,8 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockReader;
@@ -55,7 +59,7 @@ public class ClaimBlock extends Block
 			if (te instanceof ClaimTileEntity)
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
-				if (player.hasPermissionLevel(4))
+				if (player.hasPermissionLevel(3))
 					;
 				else if (!player.getUniqueID().equals(cte.owner))
 				{
@@ -73,7 +77,7 @@ public class ClaimBlock extends Block
 				return ActionResultType.SUCCESS;
 			}
 		}
-		return ActionResultType.PASS;
+		return ActionResultType.CONSUME;
 	}
 
 //	@Override
@@ -91,42 +95,50 @@ public class ClaimBlock extends Block
 	public BlockState getStateForPlacement(BlockItemUseContext context)
 	{
 		World world = context.getWorld();
-		if (!world.isRemote)
+		if (world.isRemote)
+			return null; // let server decide
+
+		PlayerEntity player = context.getPlayer();
+		BlockPos pos = context.getPos();
+		ClaimInfo cinfo = ClaimManager.get(world, pos);
+		if (!cinfo.okPerm(player))
 		{
-			PlayerEntity player = context.getPlayer();
-			BlockPos pos = context.getPos();
-			ClaimInfo cinfo = ClaimManager.get(world, pos);
-			if (!cinfo.okPerm(player))
+			player.sendStatusMessage(makeMsg("cc.message.claimed.chunk", cinfo), true);
+			return null;
+		}
+		boolean doCheck = !player.hasPermissionLevel(3);
+		if (doCheck && world.func_234923_W_() == World.field_234918_g_) // overworld
+		{
+			IWorldInfo winfo = world.getWorldInfo();
+			ChunkPos scpos = new ChunkPos(new BlockPos(winfo.getSpawnX(), 0, winfo.getSpawnZ()));
+			ChunkPos cpos = new ChunkPos(context.getPos());
+			if (scpos.getChessboardDistance(cpos) <= MyConfig.chunksFromSpawn)
 			{
-				player.sendStatusMessage(new TranslationTextComponent("cc.message.claimed.chunk"), true);
+				player.sendStatusMessage(new TranslationTextComponent("cc.message.spawn"), true);
 				return null;
 			}
-			if (world.func_234923_W_() == World.field_234918_g_) // overworld
+		}
+		if (cinfo.owner == null)
+		{
+			if (doCheck && ClaimManager.mapCount.getOrDefault(player.getUniqueID(), 0) >= MyConfig.claimLimit)
 			{
-				IWorldInfo info = world.getWorldInfo();
-				ChunkPos scpos = new ChunkPos(new BlockPos(info.getSpawnX(), 0, info.getSpawnZ()));
-				ChunkPos cpos = new ChunkPos(context.getPos());
-				if (scpos.getChessboardDistance(cpos) <= MyConfig.chunksFromSpawn)
-				{
-					player.sendStatusMessage(new TranslationTextComponent("cc.message.spawn"), true);
-					return null;
-				}
-			}
-			if (cinfo.owner == null)
-			{
-				if (ClaimManager.mapCount.getOrDefault(player.getUniqueID(), 0) >= MyConfig.claimLimit)
-				{
-					player.sendStatusMessage(new TranslationTextComponent("cc.message.claim_limit"), true);
-					return null;
-				}
+				player.sendStatusMessage(new TranslationTextComponent("cc.message.claim_limit"), true);
+				return null;
 			}
 		}
 
 		return super.getStateForPlacement(context);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
-	public void onBlockExploded(BlockState state, World world, BlockPos pos, Explosion explosion) {
+	public float getExplosionResistance(BlockState state, IBlockReader world, BlockPos pos, Explosion explosion) {
+		return state.get(ENABLED) ? Blocks.BEDROCK.getExplosionResistance() : getExplosionResistance();
+	}
+
+	@Override
+	public boolean canEntityDestroy(BlockState state, IBlockReader world, BlockPos pos, Entity entity) {
+		return !state.get(ENABLED);
 	}
 
 	@Override
@@ -187,12 +199,15 @@ public class ClaimBlock extends Block
 		if (entity instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) entity;
-			for (ItemStack e : ret)
+			if (!cte.accessList.isEmpty())
 			{
-				if (e.getItem() == ModItems.CLAIM_BLOCK)
+				for (ItemStack e : ret)
 				{
-					CompoundNBT tag = e.getOrCreateTag();
-					tag.putString("AccessList", cte.accessList);
+					if (e.getItem() == ModItems.CLAIM_BLOCK)
+					{
+						CompoundNBT tag = e.getOrCreateTag();
+						tag.putString("AccessList", cte.accessList);
+					}
 				}
 			}
 		}
@@ -207,7 +222,8 @@ public class ClaimBlock extends Block
 			ClaimInfo cinfo = ClaimManager.get(world, pos);
 			if (cinfo.owner == null)
 			{
-				if (ClaimManager.mapCount.getOrDefault(player.getUniqueID(), 0) >= MyConfig.claimLimit)
+				boolean doCheck = !player.hasPermissionLevel(3);
+				if (doCheck && ClaimManager.mapCount.getOrDefault(player.getUniqueID(), 0) >= MyConfig.claimLimit)
 				{
 					player.sendStatusMessage(new TranslationTextComponent("cc.message.claim_limit"), true);
 					return;
@@ -224,6 +240,14 @@ public class ClaimBlock extends Block
 			}
 			world.setBlockState(pos, state.with(ENABLED, true));
 		}
+	}
+
+	public static TextComponent makeMsg(String trans, ClaimInfo info)
+	{
+		TextComponent msg = new TranslationTextComponent(trans);
+		if (MyConfig.addOwner)
+			msg.func_230529_a_(new StringTextComponent(": " + ClaimManager.getName(info)));
+		return msg;
 	}
 
 	@Override
