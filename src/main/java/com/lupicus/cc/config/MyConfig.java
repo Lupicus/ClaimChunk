@@ -5,6 +5,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.lupicus.cc.Main;
 
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -22,6 +23,7 @@ public class MyConfig
 		COMMON = specPair.getLeft();
 	}
 
+	public static boolean addOwner;
 	public static int chunksFromSpawn;
 	public static int claimLimit;
 
@@ -36,27 +38,34 @@ public class MyConfig
 
 	public static void bakeConfig()
 	{
+		addOwner = COMMON.addOwner.get();
 		chunksFromSpawn = COMMON.chunksFromSpawn.get();
 		claimLimit = COMMON.claimLimit.get();
 	}
 
 	public static class Common
 	{
+		public final BooleanValue addOwner;
 		public final IntValue chunksFromSpawn;
 		public final IntValue claimLimit;
 
 		public Common(ForgeConfigSpec.Builder builder)
 		{
 			String section_trans = Main.MODID + ".config.";
+			addOwner = builder
+					.comment("Add owner name to some messages")
+					.translation(section_trans + "add_owner")
+					.define("AddOwner", true);
+
 			chunksFromSpawn = builder
 					.comment("Chunks from world spawn")
 					.translation(section_trans + "chunks_from_spawn")
-					.defineInRange("ChunksFromSpawn", () -> 10, 1, 5000);
+					.defineInRange("ChunksFromSpawn", () -> 10, -1, 5000);
 
 			claimLimit = builder
 					.comment("Maximum claims per player")
 					.translation(section_trans + "claim_limit")
-					.defineInRange("ClaimLimit", () -> 4, 1, 11);
+					.defineInRange("ClaimLimit", () -> 4, 0, 11);
 		}
 	}
 }

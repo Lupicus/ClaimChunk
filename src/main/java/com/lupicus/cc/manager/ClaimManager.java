@@ -187,6 +187,12 @@ public class ClaimManager
 		return ret;
 	}
 
+	public static String getName(ClaimInfo info)
+	{
+		GameProfile profile = server.getPlayerProfileCache().getProfileByUUID(info.owner);
+		return (profile != null) ? profile.getName() : "?";
+	}
+
 	private static void warnLimit(ClaimInfo info, int count)
 	{
 		GameProfile profile = server.getPlayerProfileCache().getProfileByUUID(info.owner);
@@ -299,7 +305,16 @@ public class ClaimManager
 				max = e.intValue();
 		for (ClaimInfo e : mapInfo.values())
 			set.add(e.pos.func_239646_a_());
-		LOGGER.info("Claims: " + mapCount.size() + " players, " + set.size() + " dims, " + mapInfo.size() + " chunks, " + max + " max chunks");		
+		LOGGER.info("Claims: " + mapCount.size() + " players, " + set.size() + " dims, " + mapInfo.size() + " chunks, " + max + " max chunks");
+		if (max > MyConfig.claimLimit)
+		{
+			for (Entry<UUID, Integer> e : mapCount.entrySet())
+			{
+				int count = e.getValue().intValue();
+				if (count > MyConfig.claimLimit)
+					warnLimit(new ClaimInfo(e.getKey(), null), count);
+			}
+		}
 	}
 
 	public static void save()

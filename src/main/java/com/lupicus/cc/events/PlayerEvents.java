@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.lupicus.cc.Main;
+import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
@@ -63,7 +64,7 @@ public class PlayerEvents
 			if (cte.grantAccess(player))
 				return;
 		}
-		player.sendStatusMessage(new TranslationTextComponent("cc.message.block.access"), true);
+		player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.block.access", info), true);
 		if (event.isCancelable())
 			event.setCanceled(true);
 	}
@@ -101,7 +102,7 @@ public class PlayerEvents
 					LOGGER.info("Placing " + stack + " @ " + world.func_234923_W_().func_240901_a_() + " " + blockpos + " by " + player.getDisplayName().getString());
 				return;
 			}
-			player.sendStatusMessage(new TranslationTextComponent("cc.message.claimed.chunk"), true);
+			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			if (event.isCancelable())
 				event.setCanceled(true);
 		}
