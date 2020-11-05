@@ -65,7 +65,7 @@ public class MyConfig
 			claimLimit = builder
 					.comment("Maximum claims per player")
 					.translation(section_trans + "claim_limit")
-					.defineInRange("ClaimLimit", () -> 4, 0, 11);
+					.defineInRange("ClaimLimit", () -> 4, 0, 25);
 		}
 	}
 }
