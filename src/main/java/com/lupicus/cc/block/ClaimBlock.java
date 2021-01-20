@@ -230,13 +230,18 @@ public class ClaimBlock extends Block
 				}
 				ClaimManager.add(world, pos, player);
 			}
-			else
+			else if (cinfo.okPerm(player))
 			{
 				BlockPos oldPos = cinfo.pos.getPos();
 				BlockState oldState = world.getBlockState(oldPos);
 				if (oldState.getBlock() == ModBlocks.CLAIM_BLOCK)
 					world.setBlockState(oldPos, oldState.with(ENABLED, false));
 				ClaimManager.replace(world, pos);
+			}
+			else
+			{
+				player.sendStatusMessage(makeMsg("cc.message.claimed.chunk", cinfo), true);
+				return;
 			}
 			world.setBlockState(pos, state.with(ENABLED, true));
 		}
