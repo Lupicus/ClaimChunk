@@ -24,6 +24,7 @@ public class MyConfig
 	}
 
 	public static boolean addOwner;
+	public static boolean mobDestroy;
 	public static int chunksFromSpawn;
 	public static int claimLimit;
 
@@ -39,6 +40,7 @@ public class MyConfig
 	public static void bakeConfig()
 	{
 		addOwner = COMMON.addOwner.get();
+		mobDestroy = COMMON.mobDestroy.get();
 		chunksFromSpawn = COMMON.chunksFromSpawn.get();
 		claimLimit = COMMON.claimLimit.get();
 	}
@@ -46,6 +48,7 @@ public class MyConfig
 	public static class Common
 	{
 		public final BooleanValue addOwner;
+		public final BooleanValue mobDestroy;
 		public final IntValue chunksFromSpawn;
 		public final IntValue claimLimit;
 
@@ -57,6 +60,11 @@ public class MyConfig
 					.translation(section_trans + "add_owner")
 					.define("AddOwner", true);
 
+			mobDestroy = builder
+					.comment("Mob explosions can destroy blocks based on mob target")
+					.translation(section_trans + "mob_destroy")
+					.define("MobDestroy", true);
+
 			chunksFromSpawn = builder
 					.comment("Chunks from world spawn")
 					.translation(section_trans + "chunks_from_spawn")
@@ -65,7 +73,7 @@ public class MyConfig
 			claimLimit = builder
 					.comment("Maximum claims per player")
 					.translation(section_trans + "claim_limit")
-					.defineInRange("ClaimLimit", () -> 4, 0, 25);
+					.defineInRange("ClaimLimit", () -> 4, 0, 250);
 		}
 	}
 }
