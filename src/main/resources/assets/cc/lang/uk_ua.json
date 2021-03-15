@@ -1,0 +1,17 @@
+{
+	"item.cc.claim_block": "Блок претензій",
+	"block.cc.claim_block": "Блок претензій",
+	"cc.lore.paper": "Документ претензії",
+	"cc.message.block.not_owner": "Ви не є власником цього блоку",
+	"cc.message.block.access": "У вас немає доступу",
+	"cc.message.spawn": "Цей шматок занадто близько до нересту",
+	"cc.message.claim_limit": "Ви досягли ліміту претензій",
+	"cc.message.claim": "Ви претендували на цей шматок",
+	"cc.message.unclaim": "Ви не вимагали цього шматка",
+	"cc.message.claimed.chunk": "На цей шматок заявлено права",
+	"cc.message.noclaims.you": "Ви не маєте претензій",
+	"cc.message.noclaims": "Жодних претензій",
+	"cc.gui.access": "Доступ",
+	"cc.gui.modify": "Змінити",
+	"cc.gui.enable": "Увімкнути"
+}

@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
 import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
@@ -166,6 +167,30 @@ public class ClaimManager
 				ret.add(e.pos);
 		}
 		ret.sort(new GPComp());
+		return ret;
+	}
+
+	public static List<GlobalPos> getNearList(UUID uuid, PlayerEntity player, int limit)
+	{
+		List<GlobalPos> ret = new ArrayList<>();
+		BlockPos loc = player.func_233580_cy_();
+		RegistryKey<World> dim = player.world.func_234923_W_();
+		PriorityQueue<GPDist> queue = new PriorityQueue<>();
+		for (ClaimInfo e : mapInfo.values())
+		{
+			if (e.owner.equals(uuid) && e.pos.func_239646_a_() == dim)
+			{
+				BlockPos pos = e.pos.getPos();
+				double dx = (double) pos.getX() - (double) loc.getX();
+				double dz = (double) pos.getZ() - (double) loc.getZ();
+				queue.add(new GPDist(e.pos, dx * dx + dz * dz));
+			}
+		}
+		int k = Math.min(queue.size(), limit);
+		for (int i = 0; i < k; ++i)
+		{
+			ret.add(queue.poll().pos);
+		}
 		return ret;
 	}
 
@@ -455,6 +480,25 @@ public class ClaimManager
 			if (dx != 0)
 				return dx;
 			return p1.getZ() - p2.getZ();
+		}
+	}
+
+	public static class GPDist implements Comparable<GPDist>
+	{
+		public GlobalPos pos;
+		public double distSq;
+
+		public GPDist(GlobalPos pos, double distSq)
+		{
+			this.pos = pos;
+			this.distSq = distSq;
+		}
+
+		@Override
+		public int compareTo(GPDist var1) {
+			if (this.distSq < var1.distSq) return -1;
+			else if (this.distSq > var1.distSq) return 1;
+			return 0;
 		}
 	}
 }

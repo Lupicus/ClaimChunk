@@ -1,6 +1,7 @@
 {
-	"item.cc.claim_block": "Anspruchsblock",
-	"block.cc.claim_block": "Anspruchsblock",
+	"item.cc.claim_block": "Anspruch block",
+	"block.cc.claim_block": "Anspruch block",
+	"cc.lore.paper": "Anspruchsdokument",
 	"cc.message.block.not_owner": "Sie besitzen diesen Block nicht",
 	"cc.message.block.access": "Sie haben keinen Zugang",
 	"cc.message.spawn": "Dieser Brocken ist zu nahe, um zu laichen",
@@ -11,5 +12,6 @@
 	"cc.message.noclaims.you": "Sie haben keine Ansprüche",
 	"cc.message.noclaims": "Keine Forderungen",
 	"cc.gui.access": "Zugriff",
+	"cc.gui.modify": "Ändern",
 	"cc.gui.enable": "Aktivieren"
 }

@@ -8,15 +8,20 @@ import java.util.Set;
 
 import com.lupicus.cc.Main;
 import com.lupicus.cc.block.ClaimBlock;
+import com.lupicus.cc.block.ModBlocks;
 import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
+import com.lupicus.cc.tileentity.ClaimTileEntity;
 
 import net.minecraft.block.PistonBlockStructureHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -48,6 +53,13 @@ public class BlockEvents
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || player.hasPermissionLevel(3))
 			return;
+		TileEntity te = world.getTileEntity(info.pos.getPos());
+		if (te instanceof ClaimTileEntity)
+		{
+			ClaimTileEntity cte = (ClaimTileEntity) te;
+			if (cte.grantModify(player))
+				return;
+		}
 		player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 		if (event.isCancelable())
 			event.setCanceled(true);
@@ -75,19 +87,31 @@ public class BlockEvents
 
 		for (BlockPos pos : list)
 		{
-			ChunkPos pos2 = new ChunkPos(pos);
+			ChunkPos cpos = new ChunkPos(pos);
 			boolean flag;
-			if (!cfilter.containsKey(pos2))
+			Boolean flagObj = cfilter.get(cpos);
+			if (flagObj != null)
+				flag = flagObj.booleanValue();
+			else
 			{
 				ClaimInfo info = ClaimManager.get(world, pos);
 				if (player != null)
+				{
 					flag = !info.okPerm(player);
+					if (flag)
+					{
+						TileEntity te = world.getTileEntity(info.pos.getPos());
+						if (te instanceof ClaimTileEntity)
+						{
+							ClaimTileEntity cte = (ClaimTileEntity) te;
+							flag = !cte.grantModify(player);
+						}
+					}
+				}
 				else
 					flag = (info.owner != null);
-				cfilter.put(pos2, flag);
+				cfilter.put(cpos, Boolean.valueOf(flag));
 			}
-			else
-				flag = cfilter.get(pos2);
 			if (flag)
 				filter.add(pos);
 		}
@@ -98,19 +122,32 @@ public class BlockEvents
 	@SubscribeEvent
 	public static void onPlaceEvent(EntityPlaceEvent event)
 	{
+		if (event instanceof EntityMultiPlaceEvent)
+			return;
 		Entity entity = event.getEntity();
 		if (!(entity instanceof PlayerEntity))
 			return;
 		PlayerEntity player = (PlayerEntity) entity;
 		World world = player.world;
-		if (world.isRemote)
-			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || player.hasPermissionLevel(3))
 			return;
-		player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
+		if (event.getPlacedBlock().getBlock() != ModBlocks.CLAIM_BLOCK)
+		{
+			TileEntity te = world.getTileEntity(info.pos.getPos());
+			if (te instanceof ClaimTileEntity)
+			{
+				ClaimTileEntity cte = (ClaimTileEntity) te;
+				if (cte.grantModify(player))
+					return;
+			}
+		}
 		if (event.isCancelable())
+		{
+			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
+			updateHands((ServerPlayerEntity) player);
+		}
 	}
 
 	@SubscribeEvent
@@ -121,13 +158,6 @@ public class BlockEvents
 			return;
 		PlayerEntity player = (PlayerEntity) entity;
 		World world = player.world;
-		if (world.isRemote)
-		{
-			// let server decide
-			if (event.isCancelable())
-				event.setCanceled(true);
-			return;
-		}
 		boolean flag = false;
 		ChunkPos prev = null;
 		ClaimInfo info = null;
@@ -140,6 +170,13 @@ public class BlockEvents
 				info = ClaimManager.get(world, pos);
 				if (info.okPerm(player) || player.hasPermissionLevel(3))
 					continue;
+				TileEntity te = world.getTileEntity(info.pos.getPos());
+				if (te instanceof ClaimTileEntity)
+				{
+					ClaimTileEntity cte = (ClaimTileEntity) te;
+					if (cte.grantModify(player))
+						continue;
+				}
 				flag = true;
 				break;
 			}
@@ -148,7 +185,23 @@ public class BlockEvents
 		{
 			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
+			updateHands((ServerPlayerEntity) player);
 		}
+	}
+
+	/**
+	 * fix client side view of the hotbar for non creative
+	 */
+	private static void updateHands(ServerPlayerEntity player)
+	{
+		if (player.connection == null)
+			return;
+		ItemStack itemstack = player.inventory.getCurrentItem();
+		if (!itemstack.isEmpty())
+			player.sendSlotContents(player.container, 36 + player.inventory.currentItem, itemstack);
+		itemstack = player.inventory.offHandInventory.get(0);
+		if (!itemstack.isEmpty())
+			player.sendSlotContents(player.container, 45, itemstack);
 	}
 
 	@SubscribeEvent
@@ -160,10 +213,18 @@ public class BlockEvents
 		Entity entity = event.getEntity();
 		if (iworld instanceof World && entity instanceof PlayerEntity)
 		{
+			PlayerEntity player = (PlayerEntity) entity;
 			World world = (World) iworld;
 			ClaimInfo info = ClaimManager.get(world, event.getPos());
-			if (info.okPerm((PlayerEntity) entity))
+			if (info.okPerm(player))
 				return;
+			TileEntity te = world.getTileEntity(info.pos.getPos());
+			if (te instanceof ClaimTileEntity)
+			{
+				ClaimTileEntity cte = (ClaimTileEntity) te;
+				if (cte.grantModify(player))
+					return;
+			}
 			if (event.isCancelable())
 				event.setCanceled(true);
 		}
@@ -174,8 +235,6 @@ public class BlockEvents
 	{
 		// this seems to be when fluid changes the state of a block
 		IWorld iworld = event.getWorld();
-		if (iworld.isRemote())
-			return;
 		ChunkPos lpos = new ChunkPos(event.getLiquidPos());
 		ChunkPos npos = new ChunkPos(event.getPos());
 		if (lpos.equals(npos))
@@ -189,6 +248,14 @@ public class BlockEvents
 			ClaimInfo linfo = ClaimManager.get(world, lpos);
 			if (ninfo.owner.equals(linfo.owner))
 				return;
+			TileEntity te = world.getTileEntity(ninfo.pos.getPos());
+			if (te instanceof ClaimTileEntity)
+			{
+				ClaimTileEntity cte = (ClaimTileEntity) te;
+				String name = (linfo.owner == null) ? "*" : ClaimManager.getName(linfo);
+				if (cte.grantModify(name))
+					return;
+			}
 			event.setNewState(event.getOriginalState());
 		}
 	}
@@ -252,8 +319,16 @@ public class BlockEvents
 				ClaimInfo info = ClaimManager.get(world, e);
 				if (info.owner == null)
 					continue;
-				if (pinfo.owner == null || !pinfo.owner.equals(info.owner))
+				if (!info.owner.equals(pinfo.owner))
 				{
+					TileEntity te = world.getTileEntity(info.pos.getPos());
+					if (te instanceof ClaimTileEntity)
+					{
+						ClaimTileEntity cte = (ClaimTileEntity) te;
+						String name = (pinfo.owner == null) ? "*" : ClaimManager.getName(pinfo);
+						if (cte.grantModify(name))
+							continue;
+					}
 					flag = true;
 					break;
 				}

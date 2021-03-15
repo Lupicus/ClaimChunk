@@ -1,6 +1,7 @@
 {
 	"item.cc.claim_block": "Krev blokk",
 	"block.cc.claim_block": "Krev blokk",
+	"cc.lore.paper": "Krev dokument",
 	"cc.message.block.not_owner": "Du eier ikke denne blokken",
 	"cc.message.block.access": "Du har ikke tilgang",
 	"cc.message.spawn": "Denne klumpen er for nær å gyte",
@@ -11,5 +12,6 @@
 	"cc.message.noclaims.you": "Du har ingen krav",
 	"cc.message.noclaims": "Ingen krav",
 	"cc.gui.access": "Adgang",
+	"cc.gui.modify": "Endre",
 	"cc.gui.enable": "Muliggjøre"
 }

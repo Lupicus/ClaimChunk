@@ -9,6 +9,7 @@ import com.lupicus.cc.manager.ClaimManager;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
@@ -31,8 +32,13 @@ public class ClaimsCommand
 	{
 		dispatcher.register(Commands.literal("claims")
 			.executes((ctx) -> {
-				return report(ctx.getSource(), null);
+				return report(ctx.getSource(), (String) null, -1);
 			})
+			.then(Commands.argument("limit", IntegerArgumentType.integer(1))
+				.executes((ctx) -> {
+					return report(ctx.getSource(), (String) null, IntegerArgumentType.getInteger(ctx, "limit"));
+				})
+			)
 			.then(Commands.argument("target", StringArgumentType.string())
 				.requires((source) -> {
 					return source.hasPermissionLevel(3);
@@ -41,8 +47,13 @@ public class ClaimsCommand
 					return ISuggestionProvider.suggest(ClaimManager.getPlayers(), builder);
 				})
 				.executes((ctx) -> {
-					return report(ctx.getSource(), StringArgumentType.getString(ctx, "target"));
+					return report(ctx.getSource(), StringArgumentType.getString(ctx, "target"), -1);
 				})
+				.then(Commands.argument("limit", IntegerArgumentType.integer(1))
+					.executes((ctx) -> {
+						return report(ctx.getSource(), StringArgumentType.getString(ctx, "target"), IntegerArgumentType.getInteger(ctx, "limit"));
+					})
+				)
 				.then(Commands.literal("remove")
 					.executes((ctx) -> {
 						return destroy(ctx.getSource(), StringArgumentType.getString(ctx, "target"));
@@ -52,7 +63,7 @@ public class ClaimsCommand
 		);
 	}
 
-	private static int report(CommandSource source, String string)
+	private static int report(CommandSource source, String string, int limit)
 			throws CommandSyntaxException
 	{
 		UUID uuid = null;
@@ -73,7 +84,11 @@ public class ClaimsCommand
 				}
 			}
 		}
-		List<GlobalPos> list = ClaimManager.getList(uuid);
+		List<GlobalPos> list = null;
+		if (limit < 0)
+			list = ClaimManager.getList(uuid);
+		else
+			list = ClaimManager.getNearList(uuid, source.asPlayer(), limit);
 		if (list.isEmpty())
 		{
 			String msg = (string == null) ? "noclaims.you" : "noclaims";

@@ -17,6 +17,7 @@ public class ClaimUpdatePacket
 	boolean enabled;
 	BlockPos pos;
 	String accessList;
+	String modifyList;
 
 	public ClaimUpdatePacket(BlockPos pos)
 	{
@@ -31,10 +32,12 @@ public class ClaimUpdatePacket
 		this.enabled = enabled;
 	}
 
-	public ClaimUpdatePacket(BlockPos pos, String accessList) {
+	public ClaimUpdatePacket(BlockPos pos, String accessList, String modifyList)
+	{
 		cmd = 2;
 		this.pos = pos;
 		this.accessList = accessList;
+		this.modifyList = modifyList;
 	}
 
 	public void encode(PacketBuffer buf)
@@ -44,7 +47,10 @@ public class ClaimUpdatePacket
 		if (cmd == 1)
 			buf.writeBoolean(enabled);
 		else if (cmd == 2)
+		{
 			buf.writeString(accessList);
+			buf.writeString(modifyList);
+		}
 	}
 
 	public static ClaimUpdatePacket readPacketData(PacketBuffer buf)
@@ -54,7 +60,7 @@ public class ClaimUpdatePacket
 		if (cmd == 1)
 			return new ClaimUpdatePacket(pos, buf.readBoolean());
 		else if (cmd == 2)
-			return new ClaimUpdatePacket(pos, buf.readString(32767));
+			return new ClaimUpdatePacket(pos, buf.readString(32767), buf.readString(32767));
 		return new ClaimUpdatePacket(pos);
 	}
 
@@ -77,11 +83,19 @@ public class ClaimUpdatePacket
 				}
 				else if (message.cmd == 2)
 				{
-					if (!cte.accessList.equals(message.accessList))
+					boolean dirty = false;
+					if (!cte.getAccess().equals(message.accessList))
 					{
-						cte.accessList = message.accessList;
-						cte.markDirty();
+						cte.setAccess(message.accessList);
+						dirty = true;
 					}
+					if (!cte.getModify().equals(message.modifyList))
+					{
+						cte.setModify(message.modifyList);
+						dirty = true;
+					}
+					if (dirty)
+						cte.markDirty();
 				}
 			}
 		});
