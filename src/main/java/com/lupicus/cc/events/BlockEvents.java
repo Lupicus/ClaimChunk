@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.lupicus.cc.Main;
 import com.lupicus.cc.block.ClaimBlock;
+import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
 
@@ -61,7 +62,7 @@ public class BlockEvents
 		HashMap<ChunkPos, Boolean> cfilter = new HashMap<>();
 		LivingEntity entity = event.getExplosion().getExplosivePlacedBy();
 		PlayerEntity player = null;
-		if (entity instanceof MobEntity)
+		if (MyConfig.mobDestroy && entity instanceof MobEntity)
 		{
 			MobEntity mob = (MobEntity) entity;
 			LivingEntity target = mob.getAttackTarget();
