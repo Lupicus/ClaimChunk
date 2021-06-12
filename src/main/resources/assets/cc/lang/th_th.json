@@ -1,6 +1,7 @@
 {
 	"item.cc.claim_block": "บล็อกการอ้างสิทธิ์",
 	"block.cc.claim_block": "บล็อกการอ้างสิทธิ์",
+	"cc.lore.paper": "เอกสารเรียกร้อง",
 	"cc.message.block.not_owner": "คุณไม่ได้เป็นเจ้าของบล็อกนี้",
 	"cc.message.block.access": "คุณไม่มีสิทธิ์เข้าถึง",
 	"cc.message.spawn": "ก้อนนี้ใกล้จะวางไข่มากเกินไป",
@@ -11,5 +12,6 @@
 	"cc.message.noclaims.you": "คุณไม่มีการเรียกร้องใด ๆ",
 	"cc.message.noclaims": "ไม่มีการอ้างสิทธิ์",
 	"cc.gui.access": "เข้าไป",
+	"cc.gui.modify": "ปรับเปลี่ยน",
 	"cc.gui.enable": "เปิดใช้งาน"
 }

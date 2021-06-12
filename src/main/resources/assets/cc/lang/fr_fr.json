@@ -1,6 +1,7 @@
 {
 	"item.cc.claim_block": "Bloc de réclamation",
 	"block.cc.claim_block": "Bloc de réclamation",
+	"cc.lore.paper": "Document de réclamation",
 	"cc.message.block.not_owner": "Vous ne possédez pas ce bloc",
 	"cc.message.block.access": "Tu n'as pas accès",
 	"cc.message.spawn": "Ce morceau est trop proche pour apparaître",
@@ -11,5 +12,6 @@
 	"cc.message.noclaims.you": "Vous n'avez aucune réclamation",
 	"cc.message.noclaims": "Aucunes réclamations",
 	"cc.gui.access": "Accès",
+	"cc.gui.modify": "Modifier",
 	"cc.gui.enable": "Activer"
 }

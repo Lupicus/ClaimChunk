@@ -1,6 +1,7 @@
 {
 	"item.cc.claim_block": "クレームブロック",
 	"block.cc.claim_block": "クレームブロック",
+	"cc.lore.paper": "クレームドキュメント",
 	"cc.message.block.not_owner": "あなたはこのブロックを所有していません",
 	"cc.message.block.access": "アクセスできません",
 	"cc.message.spawn": "このチャンクはスポーンするには近すぎます",
@@ -11,5 +12,6 @@
 	"cc.message.noclaims.you": "申し立てはありません",
 	"cc.message.noclaims": "クレームなし",
 	"cc.gui.access": "アクセス",
+	"cc.gui.modify": "変更",
 	"cc.gui.enable": "有効にする"
 }

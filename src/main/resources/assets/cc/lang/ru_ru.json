@@ -1,6 +1,7 @@
 {
 	"item.cc.claim_block": "Блокировка претензии",
 	"block.cc.claim_block": "Блокировка претензии",
+	"cc.lore.paper": "Претензионный документ",
 	"cc.message.block.not_owner": "Вам не принадлежит этот блок",
 	"cc.message.block.access": "У вас нет доступа",
 	"cc.message.spawn": "Этот кусок слишком близок к появлению",
@@ -11,5 +12,6 @@
 	"cc.message.noclaims.you": "У вас нет претензий",
 	"cc.message.noclaims": "Претензий нет",
 	"cc.gui.access": "Доступ",
+	"cc.gui.modify": "Изменить",
 	"cc.gui.enable": "включить"
 }

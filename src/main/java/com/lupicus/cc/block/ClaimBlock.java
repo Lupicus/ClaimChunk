@@ -19,9 +19,13 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.loot.LootParameters;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.StringNBT;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer.Builder;
@@ -32,6 +36,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -43,6 +48,9 @@ import net.minecraft.world.storage.IWorldInfo;
 public class ClaimBlock extends Block
 {
 	public static final BooleanProperty ENABLED = BlockStateProperties.ENABLED;
+	private static final String DATA_TAG = "ClaimData";
+	private static final String ACCESS_LIST = "AccessList";
+	private static final String MODIFY_LIST = "ModifyList";
 
 	public ClaimBlock(Properties properties) {
 		super(properties);
@@ -66,7 +74,29 @@ public class ClaimBlock extends Block
 					player.sendStatusMessage(new TranslationTextComponent("cc.message.block.not_owner"), true);
 					return ActionResultType.FAIL;
 				}
-				if (player instanceof ServerPlayerEntity) {
+				ItemStack stack = player.getHeldItem(handIn);
+				Item item = stack.getItem();
+				if (item == Items.PAPER)
+				{
+					CompoundNBT tag = stack.getChildTag(DATA_TAG);
+					if (tag != null)
+					{
+						cte.setAccess(tag.getString(ACCESS_LIST));
+						cte.setModify(tag.getString(MODIFY_LIST));
+						cte.markDirty();
+					}
+					else if (!stack.hasTag())
+					{
+						ItemStack newstack = (stack.getCount() > 1) ? stack.split(1) : stack;
+						tag = newstack.getOrCreateChildTag(DATA_TAG);
+						tag.putString(ACCESS_LIST, cte.getAccess());
+						tag.putString(MODIFY_LIST, cte.getModify());
+						setLore(newstack);
+						if (stack != newstack && !player.addItemStackToInventory(newstack))
+							player.dropItem(newstack, false);
+					}
+				}
+				else if (player instanceof ServerPlayerEntity) {
 					ServerPlayerEntity splayer = (ServerPlayerEntity) player;
 					SUpdateTileEntityPacket supdatetileentitypacket = cte.getUpdatePacket();
 					if (supdatetileentitypacket != null) {
@@ -158,7 +188,10 @@ public class ClaimBlock extends Block
 			cte.owner = player.getUniqueID();
 			CompoundNBT tag = stack.getTag();
 			if (tag != null)
-				cte.accessList = tag.getString("AccessList");
+			{
+				cte.setAccess(tag.getString(ACCESS_LIST));
+				cte.setModify(tag.getString(MODIFY_LIST));
+			}
 			cte.markDirty();
 			if (cinfo.owner != null)
 			{
@@ -181,6 +214,16 @@ public class ClaimBlock extends Block
 	public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player,
 			boolean willHarvest, FluidState fluid)
 	{
+		if (state.get(ENABLED))
+		{
+			ClaimInfo cinfo = ClaimManager.get(world, pos);
+			if (!player.getUniqueID().equals(cinfo.owner))
+			{
+				if (!world.isRemote)
+					player.sendStatusMessage(new TranslationTextComponent("cc.message.block.not_owner"), true);
+				return false;
+			}
+		}
 		boolean flag = super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
 		if (flag && !world.isRemote && state.get(ENABLED))
 		{
@@ -199,14 +242,15 @@ public class ClaimBlock extends Block
 		if (entity instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) entity;
-			if (!cte.accessList.isEmpty())
+			if (!cte.getAccess().isEmpty() || !cte.getModify().isEmpty())
 			{
 				for (ItemStack e : ret)
 				{
 					if (e.getItem() == ModItems.CLAIM_BLOCK)
 					{
 						CompoundNBT tag = e.getOrCreateTag();
-						tag.putString("AccessList", cte.accessList);
+						tag.putString(ACCESS_LIST, cte.getAccess());
+						tag.putString(MODIFY_LIST, cte.getModify());
 					}
 				}
 			}
@@ -245,6 +289,26 @@ public class ClaimBlock extends Block
 			}
 			world.setBlockState(pos, state.with(ENABLED, true));
 		}
+	}
+
+	public static void clearPaper(ItemStack stack, PlayerEntity player)
+	{
+		CompoundNBT tag = stack.getChildTag(DATA_TAG);
+		if (tag != null)
+		{
+			ItemStack newstack = (stack.getCount() > 1) ? stack.split(1) : stack;
+			newstack.setTag(null);
+			if (stack != newstack && !player.addItemStackToInventory(newstack))
+				player.dropItem(newstack, false);
+		}
+	}
+
+	private static void setLore(ItemStack stack)
+	{
+		CompoundNBT tag = stack.getOrCreateChildTag("display");
+		ListNBT list = new ListNBT();
+		list.add(StringNBT.valueOf(ITextComponent.Serializer.toJson(new TranslationTextComponent("cc.lore.paper"))));
+		tag.put("Lore", list);
 	}
 
 	public static TextComponent makeMsg(String trans, ClaimInfo info)

@@ -1,6 +1,7 @@
 {
 	"item.cc.claim_block": "दावा ब्लॉक",
 	"block.cc.claim_block": "दावा ब्लॉक",
+	"cc.lore.paper": "दावा दस्तावेज़",
 	"cc.message.block.not_owner": "आप इस ब्लॉक के स्वामी नहीं हैं",
 	"cc.message.block.access": "आपके पास पहुंच नहीं है",
 	"cc.message.spawn": "यह हिस्सा स्पॉन के बहुत करीब है",
@@ -11,5 +12,6 @@
 	"cc.message.noclaims.you": "आपका कोई दावा नहीं है",
 	"cc.message.noclaims": "कोई दावा नहीं",
 	"cc.gui.access": "पहुंच",
+	"cc.gui.modify": "संशोधित",
 	"cc.gui.enable": "सक्षम करें"
 }

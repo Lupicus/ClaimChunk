@@ -22,6 +22,7 @@ public class ClaimScreen extends Screen
 {
 	ClaimTileEntity te;
 	private TextFieldWidget access;
+	private TextFieldWidget modify;
 	private Button enabled;
 	private Button done;
 
@@ -35,10 +36,15 @@ public class ClaimScreen extends Screen
 		field_230706_i_.keyboardListener.enableRepeatEvents(true);
 		access = new TextFieldWidget(field_230712_o_, field_230708_k_ / 2 - 152, 20, 300, 20,
 				new TranslationTextComponent("cc.gui.access"));
-		access.setMaxStringLength(128);
-		access.setText(te.accessList);
+		access.setMaxStringLength(256);
+		access.setText(te.getAccess());
 		field_230705_e_.add(access);
-		enabled = func_230480_a_(new Button(field_230708_k_ / 2 - 4 - 150, 50, 150, 20,
+		modify = new TextFieldWidget(field_230712_o_, field_230708_k_ / 2 - 152, 60, 300, 20,
+				new TranslationTextComponent("cc.gui.modify"));
+		modify.setMaxStringLength(256);
+		modify.setText(te.getModify());
+		field_230705_e_.add(modify);
+		enabled = func_230480_a_(new Button(field_230708_k_ / 2 - 4 - 150, 90, 150, 20,
 				new TranslationTextComponent("cc.gui.enable"), (p_238828_1_) -> {
 					enableBlock();
 				}));
@@ -59,8 +65,10 @@ public class ClaimScreen extends Screen
 	@Override
 	public void func_231152_a_(Minecraft p_231152_1_, int p_231152_2_, int p_231152_3_) {
 		String s = access.getText();
+		String s1 = modify.getText();
 		func_231158_b_(p_231152_1_, p_231152_2_, p_231152_3_);
 		access.setText(s);
+		modify.setText(s1);
 	}
 
 	@Override
@@ -71,6 +79,7 @@ public class ClaimScreen extends Screen
 	@Override
 	public void func_231023_e_() {
 		access.tick();
+		modify.tick();
 	}
 
 	private void doneCB() {
@@ -104,7 +113,17 @@ public class ClaimScreen extends Screen
 				buf.append(",");
 			buf.append(names[i].trim());
 		}
-		Network.sendToServer(new ClaimUpdatePacket(te.getPos(), buf.toString()));
+		String temp1 = buf.toString();
+		buf.setLength(0);
+		names = modify.getText().split(",");
+		for (int i = 0; i < names.length; ++i)
+		{
+			if (i > 0)
+				buf.append(",");
+			buf.append(names[i].trim());
+		}
+		String temp2 = buf.toString();
+		Network.sendToServer(new ClaimUpdatePacket(te.getPos(), temp1, temp2));
 	}
 
 	@Override
@@ -130,6 +149,9 @@ public class ClaimScreen extends Screen
 		func_238476_c_(mStack, field_230712_o_, I18n.format("cc.gui.access"),
 				field_230708_k_ / 2 - 153, 10, 10526880);
 		access.func_230430_a_(mStack, mouseX, mouseY, partialTicks);
+		func_238476_c_(mStack, field_230712_o_, I18n.format("cc.gui.modify"),
+				field_230708_k_ / 2 - 153, 50, 10526880);
+		modify.func_230430_a_(mStack, mouseX, mouseY, partialTicks);
 
 		super.func_230430_a_(mStack, mouseX, mouseY, partialTicks);
 	}
