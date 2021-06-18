@@ -15,6 +15,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 
@@ -25,6 +26,7 @@ public class ClaimScreen extends Screen
 	private TextFieldWidget modify;
 	private Button enabled;
 	private Button done;
+	private boolean activate = false;
 
 	public ClaimScreen(ClaimTileEntity te) {
 		super(NarratorChatListener.EMPTY);
@@ -44,11 +46,20 @@ public class ClaimScreen extends Screen
 		modify.setMaxStringLength(256);
 		modify.setText(te.getModify());
 		field_230705_e_.add(modify);
-		enabled = func_230480_a_(new Button(field_230708_k_ / 2 - 4 - 150, 90, 150, 20,
-				new TranslationTextComponent("cc.gui.enable"), (p_238828_1_) -> {
-					enableBlock();
-				}));
-		enabled.field_230693_o_ = !isEnabled();
+		if (!isEnabled())
+		{
+			enabled = func_230480_a_(new Button(field_230708_k_ / 2 - 4 - 150, 90, 150, 20,
+					new TranslationTextComponent("cc.gui.enable"), (button) -> {
+						activate = !activate;
+						button.func_230994_c_(250);
+					}) {
+				@Override
+				public ITextComponent func_230458_i_() {
+					ITextComponent label = super.func_230458_i_();
+					return label.func_230532_e_().func_240702_b_(": ").func_230529_a_(DialogTexts.func_240638_a_(ClaimScreen.this.activate));
+				}
+			});
+		}
 		// done
 		done = func_230480_a_(
 				new Button(field_230708_k_ / 2 - 4 - 150, 210, 150, 20, DialogTexts.field_240632_c_, (p_238825_1_) -> {
@@ -98,11 +109,6 @@ public class ClaimScreen extends Screen
 		return state.get(ClaimBlock.ENABLED);
 	}
 
-	private void enableBlock() {
-		enabled.field_230693_o_ = false;
-		Network.sendToServer(new ClaimUpdatePacket(te.getPos(), true));
-	}
-
 	private void sendData()
 	{
 		String[] names = access.getText().split(",");
@@ -124,6 +130,8 @@ public class ClaimScreen extends Screen
 		}
 		String temp2 = buf.toString();
 		Network.sendToServer(new ClaimUpdatePacket(te.getPos(), temp1, temp2));
+		if (enabled != null && activate)
+			Network.sendToServer(new ClaimUpdatePacket(te.getPos(), true));
 	}
 
 	@Override

@@ -55,11 +55,16 @@ public class ClaimManager
 
 	public static boolean add(World world, BlockPos pos, PlayerEntity player)
 	{
+		return add(world, pos, player.getUniqueID());
+	}
+
+	public static boolean add(World world, BlockPos pos, UUID owner)
+	{
 		GlobalPos key = GlobalPos.func_239648_a_(world.func_234923_W_(), new ChunkPos(pos).asBlockPos());
 		ClaimInfo info = mapInfo.get(key);
 		if (info != null)
 			return false;
-		info = new ClaimInfo(player.getUniqueID(), GlobalPos.func_239648_a_(world.func_234923_W_(), pos));
+		info = new ClaimInfo(owner, GlobalPos.func_239648_a_(world.func_234923_W_(), pos));
 		mapInfo.put(key, info);
 		save();
 		int count = mapCount.getOrDefault(info.owner, 0);
@@ -444,6 +449,7 @@ public class ClaimManager
 
 	public static void clear()
 	{
+		server = null;
 		claimFile = null;
 		mapInfo.clear();
 		mapCount.clear();

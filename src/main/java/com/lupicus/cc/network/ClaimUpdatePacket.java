@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
@@ -69,17 +70,24 @@ public class ClaimUpdatePacket
 		msg.encode(buf);
 	}
 
+	@SuppressWarnings("deprecation")
 	public static void processPacket(ClaimUpdatePacket message, Supplier<NetworkEvent.Context> ctx)
 	{
 		ctx.get().enqueueWork(() -> {
-			World world = ctx.get().getSender().world;
-			TileEntity te = world.getTileEntity(message.pos);
+			ServerPlayerEntity player = ctx.get().getSender();
+			World world = player.world;
+			TileEntity te = null;
+			if (world.isBlockLoaded(message.pos))
+				te = world.getTileEntity(message.pos);
 			if (te instanceof ClaimTileEntity)
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
-				if (message.cmd == 1)
+				if (!player.getUniqueID().equals(cte.owner) && !player.hasPermissionLevel(3))
+					;  // ignore invalid packet from client
+				else if (message.cmd == 1)
 				{
-					ClaimBlock.enableBlock(world, message.pos, ctx.get().getSender());
+					if (cte.owner != null)
+						ClaimBlock.enableBlock(world, message.pos, player, cte.owner);
 				}
 				else if (message.cmd == 2)
 				{
