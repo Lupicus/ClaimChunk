@@ -1,6 +1,7 @@
 package com.lupicus.cc.block;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.item.ModItems;
@@ -258,7 +259,7 @@ public class ClaimBlock extends Block
 		return ret;
 	}
 
-	public static void enableBlock(World world, BlockPos pos, PlayerEntity player)
+	public static void enableBlock(World world, BlockPos pos, PlayerEntity player, UUID owner)
 	{
 		BlockState state = world.getBlockState(pos);
 		if (!state.get(ENABLED))
@@ -267,14 +268,14 @@ public class ClaimBlock extends Block
 			if (cinfo.owner == null)
 			{
 				boolean doCheck = !player.hasPermissionLevel(3);
-				if (doCheck && ClaimManager.mapCount.getOrDefault(player.getUniqueID(), 0) >= MyConfig.claimLimit)
+				if (doCheck && ClaimManager.mapCount.getOrDefault(owner, 0) >= MyConfig.claimLimit)
 				{
 					player.sendStatusMessage(new TranslationTextComponent("cc.message.claim_limit"), true);
 					return;
 				}
-				ClaimManager.add(world, pos, player);
+				ClaimManager.add(world, pos, owner);
 			}
-			else if (cinfo.okPerm(player))
+			else if (cinfo.owner.equals(owner))
 			{
 				BlockPos oldPos = cinfo.pos.getPos();
 				BlockState oldState = world.getBlockState(oldPos);
