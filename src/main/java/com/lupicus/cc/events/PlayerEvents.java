@@ -103,12 +103,7 @@ public class PlayerEvents
 			PlayerEntity player = event.getPlayer();
 			World world = player.world;
 			if (world.isRemote)
-			{
-				// let server decide
-				if (event.isCancelable())
-					event.setCanceled(true);
 				return;
-			}
 			BlockRayTraceResult blockray = (BlockRayTraceResult) target;
 			BlockPos blockpos = blockray.getPos();
 			Fluid fluid = null;
