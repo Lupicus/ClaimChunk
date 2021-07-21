@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.lupicus.cc.Main;
 import com.lupicus.cc.block.ClaimBlock;
+import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
@@ -74,6 +75,9 @@ public class PlayerEvents
 			if (cte.grantAccess(player))
 				return;
 		}
+		BlockState state = world.getBlockState(event.getPos());
+		if (MyConfig.bypassBlocks.contains(state.getBlock()))
+			return;
 		Hand h = event.getHand();
 		if (h == Hand.MAIN_HAND)
 			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.block.access", info), true);
