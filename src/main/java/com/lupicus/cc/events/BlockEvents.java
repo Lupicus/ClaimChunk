@@ -14,22 +14,24 @@ import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
-import net.minecraft.block.PistonBlockStructureHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.event.world.PistonEvent;
 import net.minecraftforge.event.world.PistonEvent.PistonMoveType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
@@ -46,21 +48,21 @@ public class BlockEvents
 	@SubscribeEvent
 	public static void onBreakBlock(BreakEvent event)
 	{
-		PlayerEntity player = event.getPlayer();
-		World world = player.world;
-		if (world.isRemote)
+		Player player = event.getPlayer();
+		Level world = player.level;
+		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || player.hasPermissions(3))
 			return;
-		TileEntity te = world.getTileEntity(info.pos.getPos());
+		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) te;
 			if (cte.grantModify(player))
 				return;
 		}
-		player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
+		player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 		if (event.isCancelable())
 			event.setCanceled(true);
 	}
@@ -68,22 +70,22 @@ public class BlockEvents
 	@SubscribeEvent
 	public static void onExplosionDetonate(ExplosionEvent.Detonate event)
 	{
-		World world = event.getWorld();
+		Level world = event.getWorld();
 		List<BlockPos> list = event.getAffectedBlocks();
 		HashSet<BlockPos> filter = new HashSet<>();
 		HashMap<ChunkPos, Boolean> cfilter = new HashMap<>();
-		LivingEntity entity = event.getExplosion().getExplosivePlacedBy();
-		PlayerEntity player = null;
-		if (MyConfig.mobDestroy && entity instanceof MobEntity)
+		LivingEntity entity = event.getExplosion().getSourceMob();
+		Player player = null;
+		if (MyConfig.mobDestroy && entity instanceof Mob)
 		{
-			MobEntity mob = (MobEntity) entity;
-			LivingEntity target = mob.getAttackTarget();
-			if (!(target instanceof PlayerEntity))
+			Mob mob = (Mob) entity;
+			LivingEntity target = mob.getTarget();
+			if (!(target instanceof Player))
 				return;
-			player = (PlayerEntity) target;
+			player = (Player) target;
 		}
-		else if (entity instanceof PlayerEntity)
-			player = (PlayerEntity) entity;
+		else if (entity instanceof Player)
+			player = (Player) entity;
 
 		for (BlockPos pos : list)
 		{
@@ -100,7 +102,7 @@ public class BlockEvents
 					flag = !info.okPerm(player);
 					if (flag)
 					{
-						TileEntity te = world.getTileEntity(info.pos.getPos());
+						BlockEntity te = world.getBlockEntity(info.pos.pos());
 						if (te instanceof ClaimTileEntity)
 						{
 							ClaimTileEntity cte = (ClaimTileEntity) te;
@@ -125,16 +127,16 @@ public class BlockEvents
 		if (event instanceof EntityMultiPlaceEvent)
 			return;
 		Entity entity = event.getEntity();
-		if (!(entity instanceof PlayerEntity))
+		if (!(entity instanceof Player))
 			return;
-		PlayerEntity player = (PlayerEntity) entity;
-		World world = player.world;
+		Player player = (Player) entity;
+		Level world = player.level;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || player.hasPermissions(3))
 			return;
 		if (event.getPlacedBlock().getBlock() != ModBlocks.CLAIM_BLOCK)
 		{
-			TileEntity te = world.getTileEntity(info.pos.getPos());
+			BlockEntity te = world.getBlockEntity(info.pos.pos());
 			if (te instanceof ClaimTileEntity)
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
@@ -144,9 +146,9 @@ public class BlockEvents
 		}
 		if (event.isCancelable())
 		{
-			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
+			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
-			updateHands((ServerPlayerEntity) player);
+			updateHands((ServerPlayer) player);
 		}
 	}
 
@@ -154,10 +156,10 @@ public class BlockEvents
 	public static void onPlaceEvent(EntityMultiPlaceEvent event)
 	{
 		Entity entity = event.getEntity();
-		if (!(entity instanceof PlayerEntity))
+		if (!(entity instanceof Player))
 			return;
-		PlayerEntity player = (PlayerEntity) entity;
-		World world = player.world;
+		Player player = (Player) entity;
+		Level world = player.level;
 		boolean flag = false;
 		ChunkPos prev = null;
 		ClaimInfo info = null;
@@ -168,9 +170,9 @@ public class BlockEvents
 			{
 				prev = pos;
 				info = ClaimManager.get(world, pos);
-				if (info.okPerm(player) || player.hasPermissionLevel(3))
+				if (info.okPerm(player) || player.hasPermissions(3))
 					continue;
-				TileEntity te = world.getTileEntity(info.pos.getPos());
+				BlockEntity te = world.getBlockEntity(info.pos.pos());
 				if (te instanceof ClaimTileEntity)
 				{
 					ClaimTileEntity cte = (ClaimTileEntity) te;
@@ -183,42 +185,48 @@ public class BlockEvents
 		}
 		if (flag && event.isCancelable())
 		{
-			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
+			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
-			updateHands((ServerPlayerEntity) player);
+			updateHands((ServerPlayer) player);
 		}
 	}
 
 	/**
 	 * fix client side view of the hotbar for non creative
 	 */
-	private static void updateHands(ServerPlayerEntity player)
+	private static void updateHands(ServerPlayer player)
 	{
 		if (player.connection == null)
 			return;
-		ItemStack itemstack = player.inventory.getCurrentItem();
+		ItemStack itemstack = player.getInventory().getSelected();
 		if (!itemstack.isEmpty())
-			player.sendSlotContents(player.container, 36 + player.inventory.currentItem, itemstack);
-		itemstack = player.inventory.offHandInventory.get(0);
+			slotChanged(player, 36 + player.getInventory().selected, itemstack);
+		itemstack = player.getInventory().offhand.get(0);
 		if (!itemstack.isEmpty())
-			player.sendSlotContents(player.container, 45, itemstack);
+			slotChanged(player, 45, itemstack);
+	}
+
+	private static void slotChanged(ServerPlayer player, int index, ItemStack itemstack)
+	{
+		InventoryMenu menu = player.inventoryMenu;
+    	player.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), index, itemstack));
 	}
 
 	@SubscribeEvent
 	public static void onTrample(FarmlandTrampleEvent event)
 	{
-		IWorld iworld = event.getWorld();
-		if (iworld.isRemote())
+		LevelAccessor iworld = event.getWorld();
+		if (iworld.isClientSide())
 			return;
 		Entity entity = event.getEntity();
-		if (iworld instanceof World && entity instanceof PlayerEntity)
+		if (iworld instanceof Level && entity instanceof Player)
 		{
-			PlayerEntity player = (PlayerEntity) entity;
-			World world = (World) iworld;
+			Player player = (Player) entity;
+			Level world = (Level) iworld;
 			ClaimInfo info = ClaimManager.get(world, event.getPos());
 			if (info.okPerm(player))
 				return;
-			TileEntity te = world.getTileEntity(info.pos.getPos());
+			BlockEntity te = world.getBlockEntity(info.pos.pos());
 			if (te instanceof ClaimTileEntity)
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
@@ -234,21 +242,21 @@ public class BlockEvents
 	public static void onFluid(FluidPlaceBlockEvent event)
 	{
 		// this seems to be when fluid changes the state of a block
-		IWorld iworld = event.getWorld();
+		LevelAccessor iworld = event.getWorld();
 		ChunkPos lpos = new ChunkPos(event.getLiquidPos());
 		ChunkPos npos = new ChunkPos(event.getPos());
 		if (lpos.equals(npos))
 			return;
-		if (iworld instanceof World)
+		if (iworld instanceof Level)
 		{
-			World world = (World) iworld;
+			Level world = (Level) iworld;
 			ClaimInfo ninfo = ClaimManager.get(world, npos);
 			if (ninfo.owner == null)
 				return;
 			ClaimInfo linfo = ClaimManager.get(world, lpos);
 			if (ninfo.owner.equals(linfo.owner))
 				return;
-			TileEntity te = world.getTileEntity(ninfo.pos.getPos());
+			BlockEntity te = world.getBlockEntity(ninfo.pos.pos());
 			if (te instanceof ClaimTileEntity)
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
@@ -263,34 +271,34 @@ public class BlockEvents
 	@SubscribeEvent
 	public static void onPiston(PistonEvent.Pre event)
 	{
-		IWorld iworld = event.getWorld();
-		if (iworld.isRemote())
+		LevelAccessor iworld = event.getWorld();
+		if (iworld.isClientSide())
 			return;
-		PistonBlockStructureHelper helper = event.getStructureHelper();
+		PistonStructureResolver helper = event.getStructureHelper();
 		if (helper == null)
 			return;
 		// when retracting the blocks might not include all of them
 		@SuppressWarnings("unused")
-		boolean moveFlag = helper.canMove();
+		boolean moveFlag = helper.resolve();
 //		if (!moveFlag)
 //			return;
 		Direction dir = event.getDirection();
 		BlockPos pos = event.getPos();
-		List<BlockPos> list1 = helper.getBlocksToDestroy();
-		List<BlockPos> list2 = helper.getBlocksToMove();
+		List<BlockPos> list1 = helper.getToDestroy();
+		List<BlockPos> list2 = helper.getToPush();
 		List<BlockPos> list3 = new ArrayList<>();
 		if (event.getPistonMoveType() == PistonMoveType.EXTEND &&
 			dir.getAxis() != Direction.Axis.Y)
 		{
 			if (list2.isEmpty())
 			{
-				list3.add(pos.offset(dir));
+				list3.add(pos.relative(dir));
 			}
 			else
 			{
 				for (BlockPos b : list2)
 				{
-					list3.add(b.offset(dir));
+					list3.add(b.relative(dir));
 				}
 			}
 		}
@@ -301,10 +309,10 @@ public class BlockEvents
 			{
 				BlockPos pos2 = pos.subtract(b);
 				if (pos2.getX() != 0 || pos2.getZ() != 0)
-					list3.add(b.offset(ydir));
+					list3.add(b.relative(ydir));
 			}
 		}
-		World world = (World) iworld;
+		Level world = (Level) iworld;
 		ChunkPos cpos = new ChunkPos(pos);
 		Set<ChunkPos> check = new HashSet<>();
 		addBlocks(cpos, check, list1);
@@ -321,7 +329,7 @@ public class BlockEvents
 					continue;
 				if (!info.owner.equals(pinfo.owner))
 				{
-					TileEntity te = world.getTileEntity(info.pos.getPos());
+					BlockEntity te = world.getBlockEntity(info.pos.pos());
 					if (te instanceof ClaimTileEntity)
 					{
 						ClaimTileEntity cte = (ClaimTileEntity) te;

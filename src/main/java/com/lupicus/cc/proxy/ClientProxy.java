@@ -4,16 +4,16 @@ import com.lupicus.cc.gui.ClaimScreen;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class ClientProxy implements IProxy
 {
 	@Override
 	public void showClaimGui(BlockPos pos) {
 		Minecraft mc = Minecraft.getInstance();
-		TileEntity te = mc.world.getTileEntity(pos);
+		BlockEntity te = mc.level.getBlockEntity(pos);
 		if (te instanceof ClaimTileEntity)
-			mc.displayGuiScreen(new ClaimScreen((ClaimTileEntity) te));
+			mc.setScreen(new ClaimScreen((ClaimTileEntity) te));
 	}
 }

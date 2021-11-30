@@ -12,21 +12,21 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.ISuggestionProvider;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class ClaimsCommand
 {
-	public static void register(CommandDispatcher<CommandSource> dispatcher)
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
 	{
 		dispatcher.register(Commands.literal("claims")
 			.executes((ctx) -> {
@@ -39,10 +39,10 @@ public class ClaimsCommand
 			)
 			.then(Commands.argument("target", StringArgumentType.string())
 				.requires((source) -> {
-					return source.hasPermissionLevel(3);
+					return source.hasPermission(3);
 				})
 				.suggests((ctx, builder) -> {
-					return ISuggestionProvider.suggest(ClaimManager.getPlayers(), builder);
+					return SharedSuggestionProvider.suggest(ClaimManager.getPlayers(), builder);
 				})
 				.executes((ctx) -> {
 					return report(ctx.getSource(), StringArgumentType.getString(ctx, "target"), -1);
@@ -61,40 +61,40 @@ public class ClaimsCommand
 		);
 	}
 
-	private static int report(CommandSource source, String string, int limit)
+	private static int report(CommandSourceStack source, String string, int limit)
 			throws CommandSyntaxException
 	{
 		UUID uuid = null;
 		if (string == null)
-			uuid = source.asPlayer().getUniqueID();
+			uuid = source.getPlayerOrException().getUUID();
 		else
 			uuid = ClaimManager.getUUID(string);
 		List<GlobalPos> list = null;
 		if (limit < 0)
 			list = ClaimManager.getList(uuid);
 		else
-			list = ClaimManager.getNearList(uuid, source.asPlayer(), limit);
+			list = ClaimManager.getNearList(uuid, source.getPlayerOrException(), limit);
 		if (list.isEmpty())
 		{
 			String msg = (string == null) ? "noclaims.you" : "noclaims";
-			source.sendFeedback(new TranslationTextComponent(Main.MODID + ".message." + msg), false);
+			source.sendSuccess(new TranslatableComponent(Main.MODID + ".message." + msg), false);
 			return 0;
 		}
 		StringBuilder msg = new StringBuilder();
 		int count = 0;
 		for (GlobalPos g : list)
 		{
-			String dim = g.func_239646_a_().func_240901_a_().toString();
-			BlockPos pos = g.getPos();
+			String dim = g.dimension().location().toString();
+			BlockPos pos = g.pos();
 			count++;
 			msg.append(String.valueOf(count) + "= " + dim + " " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + "\n");
 		}
 		msg.setLength(msg.length() - 1);
-		source.sendFeedback(new StringTextComponent(msg.toString()), false);
+		source.sendSuccess(new TextComponent(msg.toString()), false);
 		return 1;
 	}
 
-	private static int destroy(CommandSource source, String string)
+	private static int destroy(CommandSourceStack source, String string)
 			throws CommandSyntaxException
 	{
 		UUID uuid = null;
@@ -103,14 +103,14 @@ public class ClaimsCommand
 		List<GlobalPos> list = ClaimManager.getList(uuid);
 		if (list.isEmpty())
 		{
-			source.sendFeedback(new TranslationTextComponent(Main.MODID + ".message.noclaims"), false);
+			source.sendSuccess(new TranslatableComponent(Main.MODID + ".message.noclaims"), false);
 			return 0;
 		}
 		for (GlobalPos g : list)
 		{
-			RegistryKey<World> dim = g.func_239646_a_();
-			BlockPos pos = g.getPos();
-			ServerWorld world = source.getServer().getWorld(dim);
+			ResourceKey<Level> dim = g.dimension();
+			BlockPos pos = g.pos();
+			ServerLevel world = source.getServer().getLevel(dim);
 			if (world != null)
 			{
 				BlockState state = world.getBlockState(pos);

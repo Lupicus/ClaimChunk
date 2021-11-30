@@ -10,24 +10,26 @@ import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ILiquidContainer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.BucketItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlockContainer;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
 //import net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
@@ -44,12 +46,12 @@ public class PlayerEvents
 //	@SubscribeEvent
 //	public static void onLeftClick(LeftClickBlock event)
 //	{
-//		PlayerEntity player = event.getPlayer();
-//		World world = player.world;
-//		if (world.isRemote)
+//		Player player = event.getPlayer();
+//		Level world = player.level;
+//		if (world.isClientSide)
 //			return;
 //		ClaimInfo info = ClaimManager.get(world, event.getPos());
-//		if (info.okPerm(player) || player.hasPermissionLevel(3))
+//		if (info.okPerm(player) || player.hasPermissions(3))
 //			return;
 //		if (event.isCancelable())
 //		{
@@ -61,14 +63,14 @@ public class PlayerEvents
 	@SubscribeEvent
 	public static void onRightClick(RightClickBlock event)
 	{
-		PlayerEntity player = event.getPlayer();
-		World world = player.world;
-		if (world.isRemote)
+		Player player = event.getPlayer();
+		Level world = player.level;
+		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || player.hasPermissions(3))
 			return;
-		TileEntity te = world.getTileEntity(info.pos.getPos());
+		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) te;
@@ -78,21 +80,22 @@ public class PlayerEvents
 		BlockState state = world.getBlockState(event.getPos());
 		if (MyConfig.bypassBlocks.contains(state.getBlock()))
 			return;
-		Hand h = event.getHand();
-		if (h == Hand.MAIN_HAND)
-			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.block.access", info), true);
+		InteractionHand h = event.getHand();
+		if (h == InteractionHand.MAIN_HAND)
+			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.block.access", info), true);
 		if (event.isCancelable())
 		{
 			event.setCanceled(true);
 			// fix client side view of the hotbar for non creative
-			ItemStack itemstack = player.getHeldItem(h);
+			ItemStack itemstack = player.getItemInHand(h);
 			if (!itemstack.isEmpty())
 			{
-				ServerPlayerEntity sp = (ServerPlayerEntity) player;
+				ServerPlayer sp = (ServerPlayer) player;
 				if (sp.connection != null)
 				{
-					int index = 36 + ((h == Hand.MAIN_HAND) ? sp.inventory.currentItem : 9);
-					sp.sendSlotContents(sp.container, index, itemstack);
+					int index = 36 + ((h == InteractionHand.MAIN_HAND) ? sp.getInventory().selected : 9);
+					InventoryMenu menu = sp.inventoryMenu;
+					sp.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), index, itemstack));
 				}
 			}
 		}
@@ -101,15 +104,15 @@ public class PlayerEvents
 	@SubscribeEvent
 	public static void onBucket(FillBucketEvent event)
 	{
-		RayTraceResult target = event.getTarget();
-		if (target.getType() == RayTraceResult.Type.BLOCK)
+		HitResult target = event.getTarget();
+		if (target.getType() == HitResult.Type.BLOCK)
 		{
-			PlayerEntity player = event.getPlayer();
-			World world = player.world;
-			if (world.isRemote)
+			Player player = event.getPlayer();
+			Level world = player.level;
+			if (world.isClientSide)
 				return;
-			BlockRayTraceResult blockray = (BlockRayTraceResult) target;
-			BlockPos blockpos = blockray.getPos();
+			BlockHitResult blockray = (BlockHitResult) target;
+			BlockPos blockpos = blockray.getBlockPos();
 			Fluid fluid = null;
 			ItemStack stack = event.getEmptyBucket();
 			Item item = stack.getItem();
@@ -122,7 +125,7 @@ public class PlayerEvents
 			{
 				// not a bucket (not sure this will happen), so guess
 				FluidState state = world.getFluidState(blockpos);
-				if (state.getFluid() != Fluids.EMPTY)
+				if (state.getType() != Fluids.EMPTY)
 					fluid = Fluids.EMPTY;
 			}
 			if (fluid != Fluids.EMPTY)
@@ -132,23 +135,23 @@ public class PlayerEvents
 				{
 					BlockState state = world.getBlockState(blockpos);
 					Block block = state.getBlock();
-					if (block instanceof ILiquidContainer)
+					if (block instanceof LiquidBlockContainer)
 					{
-						ILiquidContainer lc = (ILiquidContainer) block;
-						if (lc.canContainFluid(world, blockpos, state, fluid))
+						LiquidBlockContainer lc = (LiquidBlockContainer) block;
+						if (lc.canPlaceLiquid(world, blockpos, state, fluid))
 							next = false;
 					}
 				}
 				if (next)
-					blockpos = blockpos.offset(blockray.getFace());
+					blockpos = blockpos.relative(blockray.getDirection());
 			}
 			ClaimInfo info = ClaimManager.get(world, blockpos);
 			boolean flag = false;
-			if (info.okPerm(player) || player.hasPermissionLevel(3))
+			if (info.okPerm(player) || player.hasPermissions(3))
 				flag = true;
 			else
 			{
-				TileEntity te = world.getTileEntity(info.pos.getPos());
+				BlockEntity te = world.getBlockEntity(info.pos.pos());
 				if (te instanceof ClaimTileEntity)
 				{
 					ClaimTileEntity cte = (ClaimTileEntity) te;
@@ -159,10 +162,10 @@ public class PlayerEvents
 			if (flag)
 			{
 				if (fluid != Fluids.EMPTY)
-					LOGGER.info("Placing " + stack + " @ " + world.func_234923_W_().func_240901_a_() + " " + blockpos + " by " + player.getName().getString());
+					LOGGER.info("Placing " + stack + " @ " + world.dimension().location() + " " + blockpos + " by " + player.getName().getString());
 				return;
 			}
-			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
+			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			if (event.isCancelable())
 				event.setCanceled(true);
 		}
@@ -172,7 +175,7 @@ public class PlayerEvents
 	public static void onRightClickItem(RightClickItem event)
 	{
 		ItemStack stack = event.getItemStack();
-		if (stack.getItem() == Items.PAPER && event.getPlayer().isSneaking())
+		if (stack.getItem() == Items.PAPER && event.getPlayer().isShiftKeyDown())
 			ClaimBlock.clearPaper(stack, event.getPlayer());
 	}
 }

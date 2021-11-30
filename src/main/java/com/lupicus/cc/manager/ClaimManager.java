@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.UUID;
 
@@ -24,17 +25,17 @@ import org.apache.logging.log4j.Logger;
 import com.lupicus.cc.config.MyConfig;
 import com.mojang.authlib.GameProfile;
 
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.PlayerProfileCache;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
-import net.minecraft.world.storage.FolderName;
+import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelResource;
 
 public class ClaimManager
 {
@@ -47,24 +48,24 @@ public class ClaimManager
 	private static List<ClaimInfo> delayList = new ArrayList<>();
 	public static final ClaimInfo EMPTY = new ClaimInfo(null, null) {
 		@Override
-		public boolean okPerm(PlayerEntity player)
+		public boolean okPerm(Player player)
 		{
 			return true;
 		}
 	};
 
-	public static boolean add(World world, BlockPos pos, PlayerEntity player)
+	public static boolean add(Level world, BlockPos pos, Player player)
 	{
-		return add(world, pos, player.getUniqueID());
+		return add(world, pos, player.getUUID());
 	}
 
-	public static boolean add(World world, BlockPos pos, UUID owner)
+	public static boolean add(Level world, BlockPos pos, UUID owner)
 	{
-		GlobalPos key = GlobalPos.func_239648_a_(world.func_234923_W_(), new ChunkPos(pos).asBlockPos());
+		GlobalPos key = GlobalPos.of(world.dimension(), new ChunkPos(pos).getWorldPosition());
 		ClaimInfo info = mapInfo.get(key);
 		if (info != null)
 			return false;
-		info = new ClaimInfo(owner, GlobalPos.func_239648_a_(world.func_234923_W_(), pos));
+		info = new ClaimInfo(owner, GlobalPos.of(world.dimension(), pos));
 		mapInfo.put(key, info);
 		save();
 		int count = mapCount.getOrDefault(info.owner, 0);
@@ -72,9 +73,9 @@ public class ClaimManager
 		return true;
 	}
 
-	public static void remove(World world, BlockPos pos)
+	public static void remove(Level world, BlockPos pos)
 	{
-		GlobalPos key = GlobalPos.func_239648_a_(world.func_234923_W_(), new ChunkPos(pos).asBlockPos());
+		GlobalPos key = GlobalPos.of(world.dimension(), new ChunkPos(pos).getWorldPosition());
 		ClaimInfo old = mapInfo.remove(key);
 		if (old != null)
 		{
@@ -86,33 +87,33 @@ public class ClaimManager
 		}
 	}
 
-	public static boolean replace(World world, BlockPos pos)
+	public static boolean replace(Level world, BlockPos pos)
 	{
-		GlobalPos key = GlobalPos.func_239648_a_(world.func_234923_W_(), new ChunkPos(pos).asBlockPos());
+		GlobalPos key = GlobalPos.of(world.dimension(), new ChunkPos(pos).getWorldPosition());
 		ClaimInfo info = mapInfo.get(key);
 		if (info == null)
 			return false;
-		info.pos = GlobalPos.func_239648_a_(world.func_234923_W_(), pos);
+		info.pos = GlobalPos.of(world.dimension(), pos);
 		mapInfo.put(key, info);
 		save();
 		return true;
 	}
 
-	public static ClaimInfo get(World world, BlockPos pos)
+	public static ClaimInfo get(Level world, BlockPos pos)
 	{
-		GlobalPos key = GlobalPos.func_239648_a_(world.func_234923_W_(), new ChunkPos(pos).asBlockPos());
+		GlobalPos key = GlobalPos.of(world.dimension(), new ChunkPos(pos).getWorldPosition());
 		return mapInfo.getOrDefault(key, EMPTY);
 	}
 
-	public static ClaimInfo get(World world, ChunkPos pos)
+	public static ClaimInfo get(Level world, ChunkPos pos)
 	{
-		GlobalPos key = GlobalPos.func_239648_a_(world.func_234923_W_(), pos.asBlockPos());
+		GlobalPos key = GlobalPos.of(world.dimension(), pos.getWorldPosition());
 		return mapInfo.getOrDefault(key, EMPTY);
 	}
 
-	public static void check(World world, BlockPos pos, UUID owner)
+	public static void check(Level world, BlockPos pos, UUID owner)
 	{
-		GlobalPos bpos = GlobalPos.func_239648_a_(world.func_234923_W_(), pos);
+		GlobalPos bpos = GlobalPos.of(world.dimension(), pos);
 		if (claimFile == null)
 		{
 			// before file has been loaded
@@ -125,7 +126,7 @@ public class ClaimManager
 
 	private static void check(GlobalPos bpos, UUID owner)
 	{
-		GlobalPos key = GlobalPos.func_239648_a_(bpos.func_239646_a_(), new ChunkPos(bpos.getPos()).asBlockPos());
+		GlobalPos key = GlobalPos.of(bpos.dimension(), new ChunkPos(bpos.pos()).getWorldPosition());
 		ClaimInfo info = mapInfo.get(key);
 		if (info == null)
 		{
@@ -175,17 +176,17 @@ public class ClaimManager
 		return ret;
 	}
 
-	public static List<GlobalPos> getNearList(UUID uuid, PlayerEntity player, int limit)
+	public static List<GlobalPos> getNearList(UUID uuid, Player player, int limit)
 	{
 		List<GlobalPos> ret = new ArrayList<>();
-		BlockPos loc = player.func_233580_cy_();
-		RegistryKey<World> dim = player.world.func_234923_W_();
+		BlockPos loc = player.blockPosition();
+		ResourceKey<Level> dim = player.level.dimension();
 		PriorityQueue<GPDist> queue = new PriorityQueue<>();
 		for (ClaimInfo e : mapInfo.values())
 		{
-			if (e.owner.equals(uuid) && e.pos.func_239646_a_() == dim)
+			if (e.owner.equals(uuid) && e.pos.dimension() == dim)
 			{
-				BlockPos pos = e.pos.getPos();
+				BlockPos pos = e.pos.pos();
 				double dx = (double) pos.getX() - (double) loc.getX();
 				double dz = (double) pos.getZ() - (double) loc.getZ();
 				queue.add(new GPDist(e.pos, dx * dx + dz * dz));
@@ -202,13 +203,13 @@ public class ClaimManager
 	public static String[] getPlayers()
 	{
 		String[] ret = new String[mapCount.size()];
-		PlayerProfileCache cache = server.getPlayerProfileCache();
+		GameProfileCache cache = server.getProfileCache();
 		int i = 0;
 		for (UUID e : mapCount.keySet())
 		{
-			GameProfile profile = cache.getProfileByUUID(e);
-			if (profile != null)
-				ret[i] = profile.getName();
+			Optional<GameProfile> profile = cache.get(e);
+			if (profile.isPresent())
+				ret[i] = profile.get().getName();
 			else
 				ret[i] = e.toString();
 			i++;
@@ -219,13 +220,13 @@ public class ClaimManager
 
 	public static UUID getUUID(String name)
 	{
-		PlayerProfileCache cache = server.getPlayerProfileCache();
+		GameProfileCache cache = server.getProfileCache();
 		for (UUID e : mapCount.keySet())
 		{
-			GameProfile profile = cache.getProfileByUUID(e);
-			if (profile != null)
+			Optional<GameProfile> profile = cache.get(e);
+			if (profile.isPresent())
 			{
-				if (name.equalsIgnoreCase(profile.getName()))
+				if (name.equalsIgnoreCase(profile.get().getName()))
 					return e;
 			}
 		}
@@ -239,15 +240,15 @@ public class ClaimManager
 
 	public static String getName(ClaimInfo info)
 	{
-		GameProfile profile = server.getPlayerProfileCache().getProfileByUUID(info.owner);
-		return (profile != null) ? profile.getName() : "?";
+		Optional<GameProfile> profile = server.getProfileCache().get(info.owner);
+		return profile.isPresent() ? profile.get().getName() : "?";
 	}
 
 	private static void warnLimit(ClaimInfo info, int count)
 	{
-		GameProfile profile = server.getPlayerProfileCache().getProfileByUUID(info.owner);
-		if (profile != null)
-			LOGGER.warn(profile.getName() + " exceeding limit: " + count);
+		Optional<GameProfile> profile = server.getProfileCache().get(info.owner);
+		if (profile.isPresent())
+			LOGGER.warn(profile.get().getName() + " exceeding limit: " + count);
 		else
 			LOGGER.warn(info.owner + " exceeding limit: " + count);
 	}
@@ -265,7 +266,7 @@ public class ClaimManager
 	public static void load(MinecraftServer server)
 	{
 		ClaimManager.server = server;
-		File file1 = server.func_240776_a_(FolderName.field_237253_i_).toFile();
+		File file1 = server.getWorldPath(LevelResource.ROOT).toFile();
 		claimFile = new File(file1, "data/claimchunk.dat");
 		if (claimFile.exists())
 		{
@@ -309,7 +310,7 @@ public class ClaimManager
 		if (size <= 0)
 			return;
 		@SuppressWarnings("unchecked")
-		RegistryKey<World>[] dimList = new RegistryKey[size];
+		ResourceKey<Level>[] dimList = new ResourceKey[size];
 		for (int i = 0; i < size; ++i)
 		{
 			int len = fd.readInt();
@@ -318,7 +319,7 @@ public class ClaimManager
 			StringBuffer buf = new StringBuffer(len);
 			for (int j = 0; j < len; ++j)
 				buf.append(fd.readChar());
-			dimList[i] = RegistryKey.func_240903_a_(Registry.field_239699_ae_, new ResourceLocation(buf.toString()));
+			dimList[i] = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(buf.toString()));
 		}
 
 		// read positions
@@ -335,11 +336,11 @@ public class ClaimManager
 			if (j < 0 || j >= dimList.length)
 				continue;
 			BlockPos pos = new BlockPos(data[2], data[3], data[4]);
-			GlobalPos key = GlobalPos.func_239648_a_(dimList[j], new ChunkPos(pos).asBlockPos());
+			GlobalPos key = GlobalPos.of(dimList[j], new ChunkPos(pos).getWorldPosition());
 			j = data[0];
 			if (j < 0 || j >= uuidList.length)
 				continue;
-			ClaimInfo info = new ClaimInfo(uuidList[j], GlobalPos.func_239648_a_(key.func_239646_a_(), pos));
+			ClaimInfo info = new ClaimInfo(uuidList[j], GlobalPos.of(key.dimension(), pos));
 			mapInfo.put(key, info);
 			int count = mapCount.getOrDefault(info.owner, 0);
 			mapCount.put(info.owner, count + 1);
@@ -348,13 +349,13 @@ public class ClaimManager
 
 	private static void report()
 	{
-		HashSet<RegistryKey<World>> set = new HashSet<>();
+		HashSet<ResourceKey<Level>> set = new HashSet<>();
 		int max = 0;
 		for (Integer e : mapCount.values())
 			if (e.intValue() > max)
 				max = e.intValue();
 		for (ClaimInfo e : mapInfo.values())
-			set.add(e.pos.func_239646_a_());
+			set.add(e.pos.dimension());
 		LOGGER.info("Claims: " + mapCount.size() + " players, " + set.size() + " dims, " + mapInfo.size() + " chunks, " + max + " max chunks");
 		if (max > MyConfig.claimLimit)
 		{
@@ -384,7 +385,7 @@ public class ClaimManager
 	private static void writeData(DataOutputStream fd) throws IOException
 	{
 		HashMap<UUID, Integer> mapUUID = new HashMap<>();
-		HashMap<RegistryKey<World>, Integer> mapDim = new HashMap<>();
+		HashMap<ResourceKey<Level>, Integer> mapDim = new HashMap<>();
 		int indexUUID = 0;
 		int indexDim = 0;
 		int index = 0;
@@ -414,15 +415,15 @@ public class ClaimManager
 			else
 				pi = ppi.intValue();
 			int di;
-			Integer pdi = mapDim.get(e.pos.func_239646_a_());
+			Integer pdi = mapDim.get(e.pos.dimension());
 			if (pdi == null)
 			{
 				di = indexDim++;
-				mapDim.put(e.pos.func_239646_a_(), di);
+				mapDim.put(e.pos.dimension(), di);
 			}
 			else
 				di = pdi.intValue();
-			BlockPos pos = e.pos.getPos();
+			BlockPos pos = e.pos.pos();
 			data[index] = pi;
 			data[index + 1] = di;
 			data[index + 2] = pos.getX();
@@ -448,9 +449,9 @@ public class ClaimManager
 		// write dim list
 		size = mapDim.size();
 		ResourceLocation[] resList = new ResourceLocation[size];
-		for (Entry<RegistryKey<World>, Integer> e : mapDim.entrySet())
+		for (Entry<ResourceKey<Level>, Integer> e : mapDim.entrySet())
 		{
-			resList[e.getValue()] = e.getKey().func_240901_a_();
+			resList[e.getValue()] = e.getKey().location();
 		}
 		fd.writeInt(size);
 		for (int i = 0; i < size; ++i)
@@ -486,9 +487,9 @@ public class ClaimManager
 			this.pos = pos;
 		}
 
-		public boolean okPerm(PlayerEntity player)
+		public boolean okPerm(Player player)
 		{
-			return (player.getUniqueID().equals(owner));
+			return (player.getUUID().equals(owner));
 		}
 	}
 
@@ -496,12 +497,12 @@ public class ClaimManager
 	{
 		@Override
 		public int compare(GlobalPos o1, GlobalPos o2) {
-			RegistryKey<World> w1 = o1.func_239646_a_();
-			RegistryKey<World> w2 = o2.func_239646_a_();
+			ResourceKey<Level> w1 = o1.dimension();
+			ResourceKey<Level> w2 = o2.dimension();
 			if (w1 != w2)
-				return w1.func_240901_a_().compareTo(w2.func_240901_a_());
-			BlockPos p1 = o1.getPos();
-			BlockPos p2 = o2.getPos();
+				return w1.location().compareTo(w2.location());
+			BlockPos p1 = o1.pos();
+			BlockPos p2 = o2.pos();
 			int dx = p1.getX() - p2.getX();
 			if (dx != 0)
 				return dx;

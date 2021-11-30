@@ -4,9 +4,9 @@ import java.util.function.Supplier;
 
 import com.lupicus.cc.Main;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 public class ClaimScreenPacket
 {
@@ -19,13 +19,13 @@ public class ClaimScreenPacket
 		this.pos = pos;
 	}
 
-	public void encode(PacketBuffer buf)
+	public void encode(FriendlyByteBuf buf)
 	{
 		buf.writeByte(cmd);
 		buf.writeBlockPos(pos);
 	}
 
-	public static ClaimScreenPacket readPacketData(PacketBuffer buf)
+	public static ClaimScreenPacket readPacketData(FriendlyByteBuf buf)
 	{
 		@SuppressWarnings("unused")
 		int cmd = buf.readByte();
@@ -33,7 +33,7 @@ public class ClaimScreenPacket
 		return new ClaimScreenPacket(pos);
 	}
 
-	public static void writePacketData(ClaimScreenPacket msg, PacketBuffer buf)
+	public static void writePacketData(ClaimScreenPacket msg, FriendlyByteBuf buf)
 	{
 		msg.encode(buf);
 	}

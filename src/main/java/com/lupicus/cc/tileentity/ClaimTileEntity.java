@@ -9,14 +9,15 @@ import javax.annotation.Nullable;
 import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.manager.ClaimManager;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class ClaimTileEntity extends TileEntity
+public class ClaimTileEntity extends BlockEntity
 {
 	public UUID owner;
 	private String accessList = "";
@@ -27,34 +28,34 @@ public class ClaimTileEntity extends TileEntity
 	private Set<String> accessSet = new HashSet<String>();
 	private Set<String> modifySet = new HashSet<String>();
 
-	public ClaimTileEntity() {
-		super(ModTileEntities.CLAIM_BLOCK);
+	public ClaimTileEntity(BlockPos pos, BlockState state) {
+		super(ModTileEntities.CLAIM_BLOCK, pos, state);
 	}
 
 	@Override
-	public void func_230337_a_(BlockState state, CompoundNBT nbt) { // read
-		super.func_230337_a_(state, nbt);
-		if (nbt.hasUniqueId("Owner"))
-			owner = nbt.getUniqueId("Owner");
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
+		if (nbt.hasUUID("Owner"))
+			owner = nbt.getUUID("Owner");
 		setAccess(nbt.getString("AccessList"));
 		setModify(nbt.getString("ModifyList"));
-		enabled = state.get(ClaimBlock.ENABLED);
+		enabled = getBlockState().getValue(ClaimBlock.ENABLED);
 	}
 
 	@Override
-	public CompoundNBT write(CompoundNBT compound) {
+	public CompoundTag save(CompoundTag compound) {
 		if (owner != null)
-			compound.putUniqueId("Owner", owner);
+			compound.putUUID("Owner", owner);
 		compound.putString("AccessList", accessList);
 		compound.putString("ModifyList", modifyList);
-		return super.write(compound);
+		return super.save(compound);
 	}
 
 	@Override
 	public void onLoad() {
 		super.onLoad();
-		if (!world.isRemote && owner != null && enabled)
-			ClaimManager.check(world, pos, owner);
+		if (!level.isClientSide && owner != null && enabled)
+			ClaimManager.check(level, worldPosition, owner);
 	}
 
 	public String getAccess()
@@ -95,7 +96,7 @@ public class ClaimTileEntity extends TileEntity
 		}
 	}
 
-	public boolean grantAccess(PlayerEntity player)
+	public boolean grantAccess(Player player)
 	{
 		if (accessAll)
 			return true;
@@ -103,7 +104,7 @@ public class ClaimTileEntity extends TileEntity
 		return accessSet.contains(name) || grantModify(name);
 	}
 
-	public boolean grantModify(PlayerEntity player)
+	public boolean grantModify(Player player)
 	{
 		if (modifyAll)
 			return true;
@@ -119,19 +120,19 @@ public class ClaimTileEntity extends TileEntity
 
 	@Override
 	@Nullable
-	public SUpdateTileEntityPacket getUpdatePacket() {
-		return new SUpdateTileEntityPacket(this.pos, 0, getUpdateTag());
+	public ClientboundBlockEntityDataPacket getUpdatePacket() {
+		return new ClientboundBlockEntityDataPacket(this.worldPosition, 0, getUpdateTag());
 	}
 
 	@Override
-	public CompoundNBT getUpdateTag() {
-		return write(new CompoundNBT());
+	public CompoundTag getUpdateTag() {
+		return save(new CompoundTag());
 	}
 
 	@Override
-	public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-		if (world == null)
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+		if (level == null)
 			return;
-		func_230337_a_(world.getBlockState(pkt.getPos()), pkt.getNbtCompound());
+		load(pkt.getTag());
 	}
 }

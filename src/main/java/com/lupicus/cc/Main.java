@@ -11,9 +11,9 @@ import com.lupicus.cc.proxy.ServerProxy;
 import com.lupicus.cc.proxy.IProxy;
 import com.lupicus.cc.tileentity.ModTileEntities;
 
-import net.minecraft.block.Block;
-import net.minecraft.item.Item;
-import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -23,9 +23,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fmlserverevents.FMLServerAboutToStartEvent;
+import net.minecraftforge.fmlserverevents.FMLServerStoppingEvent;
 
 @Mod(Main.MODID)
 public class Main
@@ -61,7 +61,7 @@ public class Main
 		}
 
 	    @SubscribeEvent
-	    public static void onTileEntitiesRegistry(final RegistryEvent.Register<TileEntityType<?>> event)
+	    public static void onTileEntitiesRegistry(final RegistryEvent.Register<BlockEntityType<?>> event)
 	    {
 	        ModTileEntities.register(event.getRegistry());
 	    }

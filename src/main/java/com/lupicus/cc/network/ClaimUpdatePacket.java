@@ -5,12 +5,12 @@ import java.util.function.Supplier;
 import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 public class ClaimUpdatePacket
 {
@@ -41,7 +41,7 @@ public class ClaimUpdatePacket
 		this.modifyList = modifyList;
 	}
 
-	public void encode(PacketBuffer buf)
+	public void encode(FriendlyByteBuf buf)
 	{
 		buf.writeByte(cmd);
 		buf.writeBlockPos(pos);
@@ -49,23 +49,23 @@ public class ClaimUpdatePacket
 			buf.writeBoolean(enabled);
 		else if (cmd == 2)
 		{
-			buf.writeString(accessList);
-			buf.writeString(modifyList);
+			buf.writeUtf(accessList);
+			buf.writeUtf(modifyList);
 		}
 	}
 
-	public static ClaimUpdatePacket readPacketData(PacketBuffer buf)
+	public static ClaimUpdatePacket readPacketData(FriendlyByteBuf buf)
 	{
 		int cmd = buf.readByte();
 		BlockPos pos = buf.readBlockPos();
 		if (cmd == 1)
 			return new ClaimUpdatePacket(pos, buf.readBoolean());
 		else if (cmd == 2)
-			return new ClaimUpdatePacket(pos, buf.readString(32767), buf.readString(32767));
+			return new ClaimUpdatePacket(pos, buf.readUtf(32767), buf.readUtf(32767));
 		return new ClaimUpdatePacket(pos);
 	}
 
-	public static void writePacketData(ClaimUpdatePacket msg, PacketBuffer buf)
+	public static void writePacketData(ClaimUpdatePacket msg, FriendlyByteBuf buf)
 	{
 		msg.encode(buf);
 	}
@@ -74,15 +74,15 @@ public class ClaimUpdatePacket
 	public static void processPacket(ClaimUpdatePacket message, Supplier<NetworkEvent.Context> ctx)
 	{
 		ctx.get().enqueueWork(() -> {
-			ServerPlayerEntity player = ctx.get().getSender();
-			World world = player.world;
-			TileEntity te = null;
-			if (world.isBlockLoaded(message.pos))
-				te = world.getTileEntity(message.pos);
+			ServerPlayer player = ctx.get().getSender();
+			Level world = player.level;
+			BlockEntity te = null;
+			if (world.hasChunkAt(message.pos))
+				te = world.getBlockEntity(message.pos);
 			if (te instanceof ClaimTileEntity)
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
-				if (!player.getUniqueID().equals(cte.owner) && !player.hasPermissionLevel(3))
+				if (!player.getUUID().equals(cte.owner) && !player.hasPermissions(3))
 					;  // ignore invalid packet from client
 				else if (message.cmd == 1)
 				{
@@ -103,7 +103,7 @@ public class ClaimUpdatePacket
 						dirty = true;
 					}
 					if (dirty)
-						cte.markDirty();
+						cte.setChanged();
 				}
 			}
 		});
