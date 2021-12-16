@@ -7,7 +7,6 @@ import com.lupicus.cc.Main;
 import com.lupicus.cc.block.ModBlocks;
 import com.lupicus.cc.manager.ClaimManager;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -17,7 +16,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.ISuggestionProvider;
-import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -70,20 +68,7 @@ public class ClaimsCommand
 		if (string == null)
 			uuid = source.asPlayer().getUniqueID();
 		else
-		{
-			PlayerProfileCache cache = source.getServer().getPlayerProfileCache();
-			GameProfile info = cache.getGameProfileForUsername(string);
-			if (info != null)
-				uuid = info.getId();
-			else
-			{
-				try {
-					uuid = UUID.fromString(string);
-				}
-				catch (Exception e) {
-				}
-			}
-		}
+			uuid = ClaimManager.getUUID(string);
 		List<GlobalPos> list = null;
 		if (limit < 0)
 			list = ClaimManager.getList(uuid);
@@ -114,20 +99,7 @@ public class ClaimsCommand
 	{
 		UUID uuid = null;
 		if (string != null)
-		{
-			PlayerProfileCache cache = source.getServer().getPlayerProfileCache();
-			GameProfile info = cache.getGameProfileForUsername(string);
-			if (info != null)
-				uuid = info.getId();
-			else
-			{
-				try {
-					uuid = UUID.fromString(string);
-				}
-				catch (Exception e) {
-				}
-			}
-		}
+			uuid = ClaimManager.getUUID(string);
 		List<GlobalPos> list = ClaimManager.getList(uuid);
 		if (list.isEmpty())
 		{

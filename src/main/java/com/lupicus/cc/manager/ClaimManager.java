@@ -217,6 +217,26 @@ public class ClaimManager
 		return ret;
 	}
 
+	public static UUID getUUID(String name)
+	{
+		PlayerProfileCache cache = server.getPlayerProfileCache();
+		for (UUID e : mapCount.keySet())
+		{
+			GameProfile profile = cache.getProfileByUUID(e);
+			if (profile != null)
+			{
+				if (name.equalsIgnoreCase(profile.getName()))
+					return e;
+			}
+		}
+		try {
+			return UUID.fromString(name);
+		}
+		catch (Exception e) {
+		}
+		return null;
+	}
+
 	public static String getName(ClaimInfo info)
 	{
 		GameProfile profile = server.getPlayerProfileCache().getProfileByUUID(info.owner);
@@ -245,13 +265,13 @@ public class ClaimManager
 	public static void load(MinecraftServer server)
 	{
 		ClaimManager.server = server;
-        File file1 = server.func_240776_a_(FolderName.field_237253_i_).toFile();
-        claimFile = new File(file1, "data/claimchunk.dat");
+		File file1 = server.func_240776_a_(FolderName.field_237253_i_).toFile();
+		claimFile = new File(file1, "data/claimchunk.dat");
 		if (claimFile.exists())
 		{
-	        try {
-	        	FileInputStream f = new FileInputStream(claimFile);
-	        	DataInputStream fd = new DataInputStream(new BufferedInputStream(f));
+			try {
+				FileInputStream f = new FileInputStream(claimFile);
+				DataInputStream fd = new DataInputStream(new BufferedInputStream(f));
 				readData(fd);
 				fd.close();
 			} catch (IOException e) {
@@ -351,9 +371,9 @@ public class ClaimManager
 	{
 		if (claimFile == null)
 			return;
-        try {
-        	FileOutputStream f = new FileOutputStream(claimFile);
-        	DataOutputStream fd = new DataOutputStream(new BufferedOutputStream(f));
+		try {
+			FileOutputStream f = new FileOutputStream(claimFile);
+			DataOutputStream fd = new DataOutputStream(new BufferedOutputStream(f));
 			writeData(fd);
 			fd.close();
 		} catch (IOException e) {
@@ -370,13 +390,13 @@ public class ClaimManager
 		int index = 0;
 		int size = mapInfo.size();
 
-        fd.writeInt(VERSION);
+		fd.writeInt(VERSION);
 
 		if (size == 0)
 		{
-	        fd.writeInt(0);
-	        fd.writeInt(0);
-	        fd.writeInt(0);
+			fd.writeInt(0);
+			fd.writeInt(0);
+			fd.writeInt(0);
 			return;
 		}
 
