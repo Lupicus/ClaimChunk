@@ -16,6 +16,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -24,8 +26,6 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fmlserverevents.FMLServerAboutToStartEvent;
-import net.minecraftforge.fmlserverevents.FMLServerStoppingEvent;
 
 @Mod(Main.MODID)
 public class Main
@@ -71,13 +71,13 @@ public class Main
 	public static class ForgeEvents
 	{
 		@SubscribeEvent
-		public static void onServerAbout(FMLServerAboutToStartEvent event)
+		public static void onServerAbout(ServerAboutToStartEvent event)
 		{
 			ClaimManager.load(event.getServer());
 		}
 
 		@SubscribeEvent
-		public static void onServerStopping(FMLServerStoppingEvent event)
+		public static void onServerStopping(ServerStoppingEvent event)
 		{
 			ClaimManager.clear();
 		}

@@ -216,7 +216,7 @@ public class ClaimBlock extends Block implements EntityBlock
 	}
 
 	@Override
-	public boolean removedByPlayer(BlockState state, Level world, BlockPos pos, Player player,
+	public boolean onDestroyedByPlayer(BlockState state, Level world, BlockPos pos, Player player,
 			boolean willHarvest, FluidState fluid)
 	{
 		if (state.getValue(ENABLED))
@@ -229,7 +229,7 @@ public class ClaimBlock extends Block implements EntityBlock
 				return false;
 			}
 		}
-		boolean flag = super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
+		boolean flag = super.onDestroyedByPlayer(state, world, pos, player, willHarvest, fluid);
 		if (flag && !world.isClientSide && state.getValue(ENABLED))
 		{
 			player.displayClientMessage(new TranslatableComponent("cc.message.unclaim"), true);

@@ -43,12 +43,12 @@ public class ClaimTileEntity extends BlockEntity
 	}
 
 	@Override
-	public CompoundTag save(CompoundTag compound) {
+	protected void saveAdditional(CompoundTag compound) {
+		super.saveAdditional(compound);
 		if (owner != null)
 			compound.putUUID("Owner", owner);
 		compound.putString("AccessList", accessList);
 		compound.putString("ModifyList", modifyList);
-		return super.save(compound);
 	}
 
 	@Override
@@ -121,12 +121,12 @@ public class ClaimTileEntity extends BlockEntity
 	@Override
 	@Nullable
 	public ClientboundBlockEntityDataPacket getUpdatePacket() {
-		return new ClientboundBlockEntityDataPacket(this.worldPosition, 0, getUpdateTag());
+		return ClientboundBlockEntityDataPacket.create(this);
 	}
 
 	@Override
 	public CompoundTag getUpdateTag() {
-		return save(new CompoundTag());
+		return saveWithoutMetadata();
 	}
 
 	@Override
