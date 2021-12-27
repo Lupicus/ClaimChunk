@@ -2,6 +2,7 @@ package com.lupicus.cc.block;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.item.ModItems;
@@ -37,6 +38,10 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.shapes.IBooleanFunction;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextComponent;
@@ -52,10 +57,22 @@ public class ClaimBlock extends Block
 	private static final String DATA_TAG = "ClaimData";
 	private static final String ACCESS_LIST = "AccessList";
 	private static final String MODIFY_LIST = "ModifyList";
+	private static final VoxelShape SHAPE = Stream.of(
+			Block.makeCuboidShape(0, 0, 0, 16, 1, 16),
+			Block.makeCuboidShape(4, 1, 4, 12, 2, 12),
+			Block.makeCuboidShape(5, 2, 5, 11, 3, 11),
+			Block.makeCuboidShape(6, 3, 6, 10, 8, 10),
+			Block.makeCuboidShape(3, 8, 3, 13, 12, 13)
+			).reduce((v1, v2) -> VoxelShapes.combineAndSimplify(v1, v2, IBooleanFunction.OR)).get();
 
 	public ClaimBlock(Properties properties) {
 		super(properties);
 		this.setDefaultState(this.stateContainer.getBaseState().with(ENABLED, Boolean.valueOf(true)));
+	}
+
+	@Override
+	public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+		return SHAPE;
 	}
 
 	@Override
