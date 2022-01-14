@@ -1,6 +1,9 @@
 {
-    "parent": "minecraft:block/cube_all",
-    "textures": {
-        "all": "cc:block/claim_block_off"
-    }
+	"parent": "cc:block/claim_block",
+	"textures": {
+		"particle": "cc:block/off/side",
+		"side": "cc:block/off/side",
+		"bottom": "cc:block/off/bottom",
+		"top": "cc:block/off/top"
+	}
 }

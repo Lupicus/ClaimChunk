@@ -2,6 +2,7 @@ package com.lupicus.cc.block;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -49,6 +50,10 @@ import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class ClaimBlock extends Block implements EntityBlock
 {
@@ -56,10 +61,22 @@ public class ClaimBlock extends Block implements EntityBlock
 	private static final String DATA_TAG = "ClaimData";
 	private static final String ACCESS_LIST = "AccessList";
 	private static final String MODIFY_LIST = "ModifyList";
+	private static final VoxelShape SHAPE = Stream.of(
+			Block.box(0, 0, 0, 16, 1, 16),
+			Block.box(4, 1, 4, 12, 2, 12),
+			Block.box(5, 2, 5, 11, 3, 11),
+			Block.box(6, 3, 6, 10, 8, 10),
+			Block.box(3, 8, 3, 13, 12, 13)
+			).reduce((v1, v2) -> Shapes.join(v1, v2, BooleanOp.OR)).get();
 
 	public ClaimBlock(BlockBehaviour.Properties properties) {
 		super(properties);
 		registerDefaultState(getStateDefinition().any().setValue(ENABLED, Boolean.valueOf(true)));
+	}
+
+	@Override
+	public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
+		return SHAPE;
 	}
 
 	@Override
