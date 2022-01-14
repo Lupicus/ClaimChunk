@@ -7,6 +7,7 @@ version="${file.jarVersion}"
 displayName="Claim Chunk"
 displayURL="https://www.curseforge.com/minecraft/mc-mods/claim-chunk"
 logoFile="logo.png"
+credits="Modeling by welpstudent"
 authors="Lupicus, MacTso"
 description='''Claim Chunk'''
 [[dependencies.cc]]
@@ -15,7 +16,6 @@ description='''Claim Chunk'''
     versionRange="[37,)"
     ordering="NONE"
     side="BOTH"
-
 [[dependencies.cc]]
     modId="minecraft"
     mandatory=true
