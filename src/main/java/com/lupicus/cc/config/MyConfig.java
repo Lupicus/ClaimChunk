@@ -3,6 +3,7 @@ package com.lupicus.cc.config;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.lupicus.cc.Main;
 
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -18,9 +20,11 @@ import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.IForgeRegistry;
 
 @Mod.EventBusSubscriber(modid = Main.MODID, bus=Mod.EventBusSubscriber.Bus.MOD)
 public class MyConfig
@@ -62,12 +66,19 @@ public class MyConfig
 	private static Set<Block> blockSet(List<? extends String> list)
 	{
 		Set<Block> ret = new HashSet<>();
+		IForgeRegistry<Block> reg = ForgeRegistries.BLOCKS;
 		for (String name : list)
 		{
+			int i = name.indexOf(":*");
+			if (i > 0)
+			{
+				expandMod(reg, ret, name.substring(0, i), name.substring(i + 2));
+				continue;
+			}
 			try {
 				ResourceLocation res = new ResourceLocation(name);
-				if (ForgeRegistries.BLOCKS.containsKey(res))
-					ret.add(ForgeRegistries.BLOCKS.getValue(res));
+				if (reg.containsKey(res))
+					ret.add(reg.getValue(res));
 				else
 					LOGGER.warn("Unknown block: " + name);
 			}
@@ -77,6 +88,32 @@ public class MyConfig
 			}
 		}
 		return ret;
+	}
+
+	private static void expandMod(IForgeRegistry<Block> reg, Set<Block> set, String name, String minus)
+	{
+		if (!ModList.get().isLoaded(name))
+		{
+			LOGGER.warn("Unknown mod entry in BypassBlocks: " + name);
+			return;
+		}
+
+		Set<String> minusSet = new HashSet<>();
+		for (String n : minus.split("-"))
+		{
+			String nt = n.trim();
+			if (!nt.isEmpty())
+				minusSet.add(nt);
+		}
+		for (Entry<ResourceKey<Block>, Block> entry : reg.getEntries())
+		{
+			ResourceLocation key = entry.getKey().location();
+			if (name.equals(key.getNamespace()) && !minusSet.contains(key.getPath()))
+			{
+				Block block = entry.getValue();
+				set.add(block);
+			}
+		}
 	}
 
 	public static class Common
