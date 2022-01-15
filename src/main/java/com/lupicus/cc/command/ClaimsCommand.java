@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.lupicus.cc.Main;
+import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.block.ModBlocks;
 import com.lupicus.cc.manager.ClaimManager;
 
@@ -30,7 +31,7 @@ public class ClaimsCommand
 	{
 		dispatcher.register(Commands.literal("claims")
 			.executes((ctx) -> {
-				return report(ctx.getSource(), (String) null, -1);
+				return report(ctx.getSource(), (String) null, 0);
 			})
 			.then(Commands.argument("limit", IntegerArgumentType.integer(1))
 				.executes((ctx) -> {
@@ -45,7 +46,7 @@ public class ClaimsCommand
 					return ISuggestionProvider.suggest(ClaimManager.getPlayers(), builder);
 				})
 				.executes((ctx) -> {
-					return report(ctx.getSource(), StringArgumentType.getString(ctx, "target"), -1);
+					return report(ctx.getSource(), StringArgumentType.getString(ctx, "target"), 0);
 				})
 				.then(Commands.argument("limit", IntegerArgumentType.integer(1))
 					.executes((ctx) -> {
@@ -55,6 +56,11 @@ public class ClaimsCommand
 				.then(Commands.literal("remove")
 					.executes((ctx) -> {
 						return destroy(ctx.getSource(), StringArgumentType.getString(ctx, "target"));
+					})
+				)
+				.then(Commands.literal("check")
+					.executes((ctx) -> {
+						return check(ctx.getSource(), StringArgumentType.getString(ctx, "target"));
 					})
 				)
 			)
@@ -70,7 +76,7 @@ public class ClaimsCommand
 		else
 			uuid = ClaimManager.getUUID(string);
 		List<GlobalPos> list = null;
-		if (limit < 0)
+		if (limit <= 0)
 			list = ClaimManager.getList(uuid);
 		else
 			list = ClaimManager.getNearList(uuid, source.asPlayer(), limit);
@@ -117,8 +123,42 @@ public class ClaimsCommand
 				if (state.getBlock() == ModBlocks.CLAIM_BLOCK)
 					world.destroyBlock(pos, false);
 			}
-			ClaimManager.remove(world, pos);
+			ClaimManager.remove(dim, pos);
 		}
+		return 1;
+	}
+
+	private static int check(CommandSource source, String string)
+			throws CommandSyntaxException
+	{
+		UUID uuid = null;
+		if (string != null)
+			uuid = ClaimManager.getUUID(string);
+		List<GlobalPos> list = ClaimManager.getList(uuid);
+		if (list.isEmpty())
+		{
+			source.sendFeedback(new TranslationTextComponent(Main.MODID + ".message.noclaims"), false);
+			return 0;
+		}
+		int count = 0;
+		for (GlobalPos g : list)
+		{
+			RegistryKey<World> dim = g.func_239646_a_();
+			BlockPos pos = g.getPos();
+			ServerWorld world = source.getServer().getWorld(dim);
+			boolean flag = false;
+			if (world != null)
+			{
+				BlockState state = world.getBlockState(pos);
+				if (state.getBlock() != ModBlocks.CLAIM_BLOCK || !state.get(ClaimBlock.ENABLED))
+					flag = true;
+			}
+			else
+				flag = true;
+			if (flag && ClaimManager.remove(dim, pos, uuid))
+				count++;
+		}
+		source.sendFeedback(new StringTextComponent("Removed " + count + " bad claim chunks"), false);
 		return 1;
 	}
 }

@@ -74,7 +74,12 @@ public class ClaimManager
 
 	public static void remove(World world, BlockPos pos)
 	{
-		GlobalPos key = GlobalPos.func_239648_a_(world.func_234923_W_(), new ChunkPos(pos).asBlockPos());
+		remove(world.func_234923_W_(), pos);
+	}
+
+	public static void remove(RegistryKey<World> dim, BlockPos pos)
+	{
+		GlobalPos key = GlobalPos.func_239648_a_(dim, new ChunkPos(pos).asBlockPos());
 		ClaimInfo old = mapInfo.remove(key);
 		if (old != null)
 		{
@@ -84,6 +89,23 @@ public class ClaimManager
 				count = 0;
 			mapCount.put(old.owner, count);
 		}
+	}
+
+	public static boolean remove(RegistryKey<World> dim, BlockPos pos, UUID owner)
+	{
+		GlobalPos key = GlobalPos.func_239648_a_(dim, new ChunkPos(pos).asBlockPos());
+		ClaimInfo info = mapInfo.get(key);
+		if (info != null && info.owner.equals(owner))
+		{
+			mapInfo.remove(key);
+			save();
+			int count = mapCount.getOrDefault(info.owner, 0) - 1;
+			if (count < 0)
+				count = 0;
+			mapCount.put(info.owner, count);
+			return true;
+		}
+		return false;
 	}
 
 	public static boolean replace(World world, BlockPos pos)

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 import com.lupicus.cc.Main;
@@ -70,23 +71,34 @@ public class BlockEvents
 	{
 		World world = event.getWorld();
 		List<BlockPos> list = event.getAffectedBlocks();
-		HashSet<BlockPos> filter = new HashSet<>();
 		HashMap<ChunkPos, Boolean> cfilter = new HashMap<>();
 		LivingEntity entity = event.getExplosion().getExplosivePlacedBy();
 		PlayerEntity player = null;
-		if (MyConfig.mobDestroy && entity instanceof MobEntity)
+		if (entity instanceof MobEntity)
 		{
-			MobEntity mob = (MobEntity) entity;
-			LivingEntity target = mob.getAttackTarget();
-			if (!(target instanceof PlayerEntity))
-				return;
-			player = (PlayerEntity) target;
+			if (MyConfig.mobDestroy)
+			{
+				MobEntity mob = (MobEntity) entity;
+				LivingEntity target = mob.getAttackTarget();
+				if (!(target instanceof PlayerEntity))
+					return;
+				player = (PlayerEntity) target;
+				if (MyConfig.pvpMode)
+					return;
+			}
 		}
-		else if (entity instanceof PlayerEntity)
-			player = (PlayerEntity) entity;
-
-		for (BlockPos pos : list)
+		else
 		{
+			if (entity instanceof PlayerEntity)
+				player = (PlayerEntity) entity;
+			if (MyConfig.pvpMode)
+				return;
+		}
+		PlayerEvents.handleExplosion(world, player, event.getAffectedEntities());
+
+		for (ListIterator<BlockPos> it = list.listIterator(list.size()); it.hasPrevious(); )
+		{
+			BlockPos pos = it.previous();
 			ChunkPos cpos = new ChunkPos(pos);
 			boolean flag;
 			Boolean flagObj = cfilter.get(cpos);
@@ -113,10 +125,8 @@ public class BlockEvents
 				cfilter.put(cpos, Boolean.valueOf(flag));
 			}
 			if (flag)
-				filter.add(pos);
+				it.remove();
 		}
-		if (!filter.isEmpty())
-			list.removeIf(b -> filter.contains(b));
 	}
 
 	@SubscribeEvent

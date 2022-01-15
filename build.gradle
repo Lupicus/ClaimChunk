@@ -1,7 +1,6 @@
 buildscript {
     repositories {
-        maven { url = 'https://files.minecraftforge.net/maven' }
-        jcenter()
+        maven { url = 'https://maven.minecraftforge.net' }
         mavenCentral()
     }
     dependencies {
@@ -13,7 +12,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = "${mc_version}-${mod_version}"
+version = "${mod_version}"
 group = 'com.lupicus.cc' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "ClaimChunk"
 
@@ -119,10 +118,11 @@ test {
 
 // Example for how to get properties into the manifest for reading by the runtime..
 jar {
+    appendix = "${mc_version}"
     manifest {
         attributes([
             "Implementation-Title": archivesBaseName,
-            "Implementation-Version": mod_version,
+            "Implementation-Version": version,
             "Implementation-Vendor" : "lupicus",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
@@ -143,7 +143,7 @@ publishing {
     }
     repositories {
         maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
+            url "file://${project.projectDir}/mcmodsrepo"
         }
     }
 }

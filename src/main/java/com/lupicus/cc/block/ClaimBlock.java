@@ -15,8 +15,10 @@ import com.lupicus.cc.tileentity.ClaimTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.material.PushReaction;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.fluid.FluidState;
@@ -24,6 +26,7 @@ import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.loot.LootContext;
 import net.minecraft.loot.LootParameters;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -50,6 +53,7 @@ import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.IWorldInfo;
+import net.minecraftforge.common.util.FakePlayer;
 
 public class ClaimBlock extends Block
 {
@@ -73,6 +77,11 @@ public class ClaimBlock extends Block
 	@Override
 	public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
 		return SHAPE;
+	}
+
+	@Override
+	public PushReaction getPushReaction(BlockState state) {
+		return PushReaction.BLOCK;
 	}
 
 	@Override
@@ -147,6 +156,8 @@ public class ClaimBlock extends Block
 			return null; // let server decide
 
 		PlayerEntity player = context.getPlayer();
+		if (player instanceof FakePlayer)
+			return null;
 		BlockPos pos = context.getPos();
 		ClaimInfo cinfo = ClaimManager.get(world, pos);
 		if (!cinfo.okPerm(player))
@@ -154,34 +165,61 @@ public class ClaimBlock extends Block
 			player.sendStatusMessage(makeMsg("cc.message.claimed.chunk", cinfo), true);
 			return null;
 		}
-		boolean doCheck = !player.hasPermissionLevel(3);
-		if (doCheck && world.func_234923_W_() == World.field_234918_g_) // overworld
+		if (!player.hasPermissionLevel(3))
 		{
-			IWorldInfo winfo = world.getWorldInfo();
-			ChunkPos scpos = new ChunkPos(new BlockPos(winfo.getSpawnX(), 0, winfo.getSpawnZ()));
-			ChunkPos cpos = new ChunkPos(context.getPos());
-			if (scpos.getChessboardDistance(cpos) <= MyConfig.chunksFromSpawn)
-			{
-				player.sendStatusMessage(new TranslationTextComponent("cc.message.spawn"), true);
+			if (MyConfig.checkDim(world))
 				return null;
+			if (world.func_234923_W_() == World.field_234918_g_) // overworld
+			{
+				IWorldInfo winfo = world.getWorldInfo();
+				ChunkPos scpos = new ChunkPos(new BlockPos(winfo.getSpawnX(), 0, winfo.getSpawnZ()));
+				ChunkPos cpos = new ChunkPos(context.getPos());
+				if (scpos.getChessboardDistance(cpos) <= MyConfig.chunksFromSpawn)
+				{
+					player.sendStatusMessage(new TranslationTextComponent("cc.message.spawn"), true);
+					return null;
+				}
+			}
+			if (cinfo.owner == null)
+			{
+				if (ClaimManager.mapCount.getOrDefault(player.getUniqueID(), 0) >= MyConfig.claimLimit)
+				{
+					player.sendStatusMessage(new TranslationTextComponent("cc.message.claim_limit"), true);
+					return null;
+				}
 			}
 		}
-		if (cinfo.owner == null)
-		{
-			if (doCheck && ClaimManager.mapCount.getOrDefault(player.getUniqueID(), 0) >= MyConfig.claimLimit)
-			{
-				player.sendStatusMessage(new TranslationTextComponent("cc.message.claim_limit"), true);
-				return null;
-			}
-		}
-
 		return super.getStateForPlacement(context);
 	}
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public float getExplosionResistance(BlockState state, IBlockReader world, BlockPos pos, Explosion explosion) {
-		return state.get(ENABLED) ? Blocks.BEDROCK.getExplosionResistance() : getExplosionResistance();
+	public float getExplosionResistance(BlockState state, IBlockReader world, BlockPos pos, Explosion explosion)
+	{
+		boolean flag = state.get(ENABLED);
+		if (flag && MyConfig.pvpMode)
+		{
+			LivingEntity entity = explosion.getExplosivePlacedBy();
+			if (entity instanceof MobEntity)
+			{
+				if (MyConfig.mobDestroy)
+				{
+					MobEntity mob = (MobEntity) entity;
+					if (mob.getAttackTarget() instanceof PlayerEntity)
+						flag = false;
+				}
+			}
+			else
+				flag = false;
+		}
+		return flag ? Blocks.BEDROCK.getExplosionResistance() : getExplosionResistance();
+	}
+
+	@Override
+	public void onExplosionDestroy(World worldIn, BlockPos pos, Explosion explosionIn) {
+		ClaimInfo cinfo = ClaimManager.get(worldIn, pos);
+		if (cinfo.owner != null && pos.equals(cinfo.pos.getPos()))
+			ClaimManager.remove(worldIn, pos);
 	}
 
 	@Override
@@ -232,18 +270,22 @@ public class ClaimBlock extends Block
 	public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player,
 			boolean willHarvest, FluidState fluid)
 	{
-		if (state.get(ENABLED))
+		boolean claimed = state.get(ENABLED);
+		if (claimed)
 		{
+			if (world.isRemote)
+				return false;
 			ClaimInfo cinfo = ClaimManager.get(world, pos);
-			if (!player.getUniqueID().equals(cinfo.owner))
+			if (cinfo.owner == null || !pos.equals(cinfo.pos.getPos()))
+				claimed = false;
+			else if (!cinfo.okPerm(player))
 			{
-				if (!world.isRemote)
-					player.sendStatusMessage(new TranslationTextComponent("cc.message.block.not_owner"), true);
+				player.sendStatusMessage(new TranslationTextComponent("cc.message.block.not_owner"), true);
 				return false;
 			}
 		}
 		boolean flag = super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
-		if (flag && !world.isRemote && state.get(ENABLED))
+		if (flag && claimed)
 		{
 			player.sendStatusMessage(new TranslationTextComponent("cc.message.unclaim"), true);
 			ClaimManager.remove(world, pos);
@@ -253,7 +295,7 @@ public class ClaimBlock extends Block
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public List<ItemStack> getDrops(BlockState state, net.minecraft.loot.LootContext.Builder builder)
+	public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder)
 	{
 		List<ItemStack> ret = super.getDrops(state, builder);
 		TileEntity entity = builder.get(LootParameters.BLOCK_ENTITY);

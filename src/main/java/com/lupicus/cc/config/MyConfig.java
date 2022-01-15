@@ -15,6 +15,7 @@ import com.lupicus.cc.Main;
 import net.minecraft.block.Block;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
@@ -41,9 +42,22 @@ public class MyConfig
 
 	public static boolean addOwner;
 	public static boolean mobDestroy;
+	public static boolean pvpMode;
 	public static int chunksFromSpawn;
 	public static int claimLimit;
 	public static Set<Block> bypassBlocks;
+	public static Set<String> excludeDimSet;
+	public static Set<String> includeDimSet;
+	public static boolean allDims;
+
+	public static boolean checkDim(World world)
+	{
+		String key = world.func_234923_W_().func_240901_a_().toString();
+		if (!(allDims || includeDimSet.contains(key)) ||
+			excludeDimSet.contains(key))
+			return true;
+		return false;
+	}
 
 	@SubscribeEvent
 	public static void onModConfigEvent(final ModConfigEvent configEvent)
@@ -58,9 +72,26 @@ public class MyConfig
 	{
 		addOwner = COMMON.addOwner.get();
 		mobDestroy = COMMON.mobDestroy.get();
+		pvpMode = COMMON.pvpMode.get();
 		chunksFromSpawn = COMMON.chunksFromSpawn.get();
 		claimLimit = COMMON.claimLimit.get();
 		bypassBlocks = blockSet(COMMON.bypassBlocks.get());
+		String[] temp = extract(COMMON.includeDims.get());
+		allDims = hasAll(temp);
+		if (allDims)
+			temp = new String[0];
+		includeDimSet = stringSet(temp);
+		excludeDimSet = stringSet(extract(COMMON.excludeDims.get()));
+	}
+
+	private static Set<String> stringSet(String[] values)
+	{
+		HashSet<String> ret = new HashSet<>();
+		for (String name : values)
+		{
+			ret.add(name);
+		}
+		return ret;
 	}
 
 	private static Set<Block> blockSet(List<? extends String> list)
@@ -116,18 +147,39 @@ public class MyConfig
 		}
 	}
 
+	private static boolean hasAll(String[] values)
+	{
+		for (String name : values)
+		{
+			if (name.equals("*"))
+				return true;
+		}
+		return false;
+	}
+
+	private static String[] extract(List<? extends String> value)
+	{
+		return value.toArray(new String[value.size()]);
+	}
+
 	public static class Common
 	{
 		public final BooleanValue addOwner;
 		public final BooleanValue mobDestroy;
+		public final BooleanValue pvpMode;
 		public final IntValue chunksFromSpawn;
 		public final IntValue claimLimit;
 		public final ConfigValue<List<? extends String>> bypassBlocks;
+		public final ConfigValue<List<? extends String>> includeDims;
+		public final ConfigValue<List<? extends String>> excludeDims;
 
 		public Common(ForgeConfigSpec.Builder builder)
 		{
 			List<String> bbDefList = Arrays.asList("minecraft:ender_chest");
+			List<String> idDefList = Arrays.asList("*");
+			List<String> edDefList = Arrays.asList("");
 			String section_trans = Main.MODID + ".config.";
+
 			addOwner = builder
 					.comment("Add owner name to some messages")
 					.translation(section_trans + "add_owner")
@@ -137,6 +189,11 @@ public class MyConfig
 					.comment("Mob explosions can destroy blocks based on mob target")
 					.translation(section_trans + "mob_destroy")
 					.define("MobDestroy", true);
+
+			pvpMode = builder
+					.comment("Explosions caused by any player can destroy blocks")
+					.translation(section_trans + "player_destroy")
+					.define("PvpMode", false);
 
 			chunksFromSpawn = builder
 					.comment("Chunks from world spawn")
@@ -152,6 +209,16 @@ public class MyConfig
 					.comment("Blocks that bypass claims on right click")
 					.translation(section_trans + "bypass_blocks")
 					.defineList("BypassBlocks", bbDefList, Common::isString);
+
+			includeDims = builder
+					.comment("Include dimensions")
+					.translation(section_trans + "include_dims")
+					.defineList("IncludeDims", idDefList, Common::isString);
+
+			excludeDims = builder
+					.comment("Exclude dimensions")
+					.translation(section_trans + "exclude_dims")
+					.defineList("ExcludeDims", edDefList, Common::isString);
 		}
 
 		public static boolean isString(Object o)
