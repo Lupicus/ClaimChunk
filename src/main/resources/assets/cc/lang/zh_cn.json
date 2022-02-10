@@ -12,6 +12,6 @@
 	"cc.message.noclaims.you": "您没有已占有的区块",
 	"cc.message.noclaims": "没有已占有的区块",
 	"cc.gui.access": "允许移动",
-	"cc.gui.modify": "允许建筑和破坏",
+	"cc.gui.modify": "允许操作",
 	"cc.gui.enable": "启用"
 }
