@@ -1,7 +1,6 @@
 {
 	"parent": "cc:block/claim_block",
 	"textures": {
-		"particle": "cc:block/on/side",
 		"side": "cc:block/on/side",
 		"bottom": "cc:block/on/bottom",
 		"top": "cc:block/on/top"
