@@ -1,0 +1,5 @@
+{
+	"AbsState": "asm/AbsState.js",
+	"ArmorStand": "asm/ArmorStand.js",
+	"Player": "asm/Player.js"
+}

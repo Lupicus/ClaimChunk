@@ -75,7 +75,12 @@ public class ClaimManager
 
 	public static void remove(Level world, BlockPos pos)
 	{
-		GlobalPos key = GlobalPos.of(world.dimension(), new ChunkPos(pos).getWorldPosition());
+		remove(world.dimension(), pos);
+	}
+
+	public static void remove(ResourceKey<Level> dim, BlockPos pos)
+	{
+		GlobalPos key = GlobalPos.of(dim, new ChunkPos(pos).getWorldPosition());
 		ClaimInfo old = mapInfo.remove(key);
 		if (old != null)
 		{
@@ -85,6 +90,23 @@ public class ClaimManager
 				count = 0;
 			mapCount.put(old.owner, count);
 		}
+	}
+
+	public static boolean remove(ResourceKey<Level> dim, BlockPos pos, UUID owner)
+	{
+		GlobalPos key = GlobalPos.of(dim, new ChunkPos(pos).getWorldPosition());
+		ClaimInfo info = mapInfo.get(key);
+		if (info != null && info.owner.equals(owner))
+		{
+			mapInfo.remove(key);
+			save();
+			int count = mapCount.getOrDefault(info.owner, 0) - 1;
+			if (count < 0)
+				count = 0;
+			mapCount.put(info.owner, count);
+			return true;
+		}
+		return false;
 	}
 
 	public static boolean replace(Level world, BlockPos pos)

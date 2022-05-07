@@ -27,6 +27,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -46,6 +47,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -54,6 +56,7 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.common.util.FakePlayer;
 
 public class ClaimBlock extends Block implements EntityBlock
 {
@@ -77,6 +80,11 @@ public class ClaimBlock extends Block implements EntityBlock
 	@Override
 	public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
 		return SHAPE;
+	}
+
+	@Override
+	public PushReaction getPistonPushReaction(BlockState state) {
+		return PushReaction.BLOCK;
 	}
 
 	@Override
@@ -151,6 +159,8 @@ public class ClaimBlock extends Block implements EntityBlock
 			return null; // let server decide
 
 		Player player = context.getPlayer();
+		if (player instanceof FakePlayer)
+			return null;
 		BlockPos pos = context.getClickedPos();
 		ClaimInfo cinfo = ClaimManager.get(world, pos);
 		if (!cinfo.okPerm(player))
@@ -158,34 +168,61 @@ public class ClaimBlock extends Block implements EntityBlock
 			player.displayClientMessage(makeMsg("cc.message.claimed.chunk", cinfo), true);
 			return null;
 		}
-		boolean doCheck = !player.hasPermissions(3);
-		if (doCheck && world.dimension() == Level.OVERWORLD)
+		if (!player.hasPermissions(3))
 		{
-			LevelData winfo = world.getLevelData();
-			ChunkPos scpos = new ChunkPos(new BlockPos(winfo.getXSpawn(), 0, winfo.getZSpawn()));
-			ChunkPos cpos = new ChunkPos(pos);
-			if (scpos.getChessboardDistance(cpos) <= MyConfig.chunksFromSpawn)
-			{
-				player.displayClientMessage(new TranslatableComponent("cc.message.spawn"), true);
+			if (MyConfig.checkDim(world))
 				return null;
+			if (world.dimension() == Level.OVERWORLD)
+			{
+				LevelData winfo = world.getLevelData();
+				ChunkPos scpos = new ChunkPos(new BlockPos(winfo.getXSpawn(), 0, winfo.getZSpawn()));
+				ChunkPos cpos = new ChunkPos(pos);
+				if (scpos.getChessboardDistance(cpos) <= MyConfig.chunksFromSpawn)
+				{
+					player.displayClientMessage(new TranslatableComponent("cc.message.spawn"), true);
+					return null;
+				}
+			}
+			if (cinfo.owner == null)
+			{
+				if (ClaimManager.mapCount.getOrDefault(player.getUUID(), 0) >= MyConfig.claimLimit)
+				{
+					player.displayClientMessage(new TranslatableComponent("cc.message.claim_limit"), true);
+					return null;
+				}
 			}
 		}
-		if (cinfo.owner == null)
-		{
-			if (doCheck && ClaimManager.mapCount.getOrDefault(player.getUUID(), 0) >= MyConfig.claimLimit)
-			{
-				player.displayClientMessage(new TranslatableComponent("cc.message.claim_limit"), true);
-				return null;
-			}
-		}
-
 		return super.getStateForPlacement(context);
 	}
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public float getExplosionResistance(BlockState state, BlockGetter world, BlockPos pos, Explosion explosion) {
-		return state.getValue(ENABLED) ? Blocks.BEDROCK.getExplosionResistance() : getExplosionResistance();
+	public float getExplosionResistance(BlockState state, BlockGetter world, BlockPos pos, Explosion explosion)
+	{
+		boolean flag = state.getValue(ENABLED);
+		if (flag && MyConfig.pvpMode)
+		{
+			LivingEntity entity = explosion.getSourceMob();
+			if (entity instanceof Mob)
+			{
+				if (MyConfig.mobDestroy)
+				{
+					Mob mob = (Mob) entity;
+					if (mob.getTarget() instanceof Player)
+						flag = false;
+				}
+			}
+			else
+				flag = false;
+		}
+		return flag ? Blocks.BEDROCK.getExplosionResistance() : getExplosionResistance();
+	}
+
+	@Override
+	public void wasExploded(Level worldIn, BlockPos pos, Explosion explosionIn) {
+		ClaimInfo cinfo = ClaimManager.get(worldIn, pos);
+		if (cinfo.owner != null && pos.equals(cinfo.pos.pos()))
+			ClaimManager.remove(worldIn, pos);
 	}
 
 	@Override
@@ -236,18 +273,22 @@ public class ClaimBlock extends Block implements EntityBlock
 	public boolean onDestroyedByPlayer(BlockState state, Level world, BlockPos pos, Player player,
 			boolean willHarvest, FluidState fluid)
 	{
-		if (state.getValue(ENABLED))
+		boolean claimed = state.getValue(ENABLED);
+		if (claimed)
 		{
+			if (world.isClientSide)
+				return false;
 			ClaimInfo cinfo = ClaimManager.get(world, pos);
-			if (!player.getUUID().equals(cinfo.owner))
+			if (cinfo.owner == null || !pos.equals(cinfo.pos.pos()))
+				claimed = false;
+			else if (!cinfo.okPerm(player))
 			{
-				if (!world.isClientSide)
-					player.displayClientMessage(new TranslatableComponent("cc.message.block.not_owner"), true);
+				player.displayClientMessage(new TranslatableComponent("cc.message.block.not_owner"), true);
 				return false;
 			}
 		}
 		boolean flag = super.onDestroyedByPlayer(state, world, pos, player, willHarvest, fluid);
-		if (flag && !world.isClientSide && state.getValue(ENABLED))
+		if (flag && claimed)
 		{
 			player.displayClientMessage(new TranslatableComponent("cc.message.unclaim"), true);
 			ClaimManager.remove(world, pos);
