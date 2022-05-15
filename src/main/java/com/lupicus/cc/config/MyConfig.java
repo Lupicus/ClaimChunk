@@ -14,6 +14,7 @@ import com.lupicus.cc.Main;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -46,6 +47,7 @@ public class MyConfig
 	public static int chunksFromSpawn;
 	public static int claimLimit;
 	public static Set<Block> bypassBlocks;
+	public static Set<EntityType<?>> bypassEntities;
 	public static Set<String> excludeDimSet;
 	public static Set<String> includeDimSet;
 	public static boolean allDims;
@@ -76,6 +78,7 @@ public class MyConfig
 		chunksFromSpawn = COMMON.chunksFromSpawn.get();
 		claimLimit = COMMON.claimLimit.get();
 		bypassBlocks = blockSet(COMMON.bypassBlocks.get());
+		bypassEntities = entitySet(COMMON.bypassEntities.get());
 		String[] temp = extract(COMMON.includeDims.get());
 		allDims = hasAll(temp);
 		if (allDims)
@@ -112,6 +115,27 @@ public class MyConfig
 					ret.add(reg.getValue(res));
 				else
 					LOGGER.warn("Unknown block: " + name);
+			}
+			catch (Exception e)
+			{
+				LOGGER.warn("Bad entry: " + name);
+			}
+		}
+		return ret;
+	}
+
+	private static Set<EntityType<?>> entitySet(List<? extends String> list)
+	{
+		Set<EntityType<?>> ret = new HashSet<>();
+		IForgeRegistry<EntityType<?>> reg = ForgeRegistries.ENTITIES;
+		for (String name : list)
+		{
+			try {
+				ResourceLocation res = new ResourceLocation(name);
+				if (reg.containsKey(res))
+					ret.add(reg.getValue(res));
+				else
+					LOGGER.warn("Unknown entity: " + name);
 			}
 			catch (Exception e)
 			{
@@ -170,12 +194,14 @@ public class MyConfig
 		public final IntValue chunksFromSpawn;
 		public final IntValue claimLimit;
 		public final ConfigValue<List<? extends String>> bypassBlocks;
+		public final ConfigValue<List<? extends String>> bypassEntities;
 		public final ConfigValue<List<? extends String>> includeDims;
 		public final ConfigValue<List<? extends String>> excludeDims;
 
 		public Common(ForgeConfigSpec.Builder builder)
 		{
 			List<String> bbDefList = Arrays.asList("minecraft:ender_chest");
+			List<String> beDefList = Arrays.asList("");
 			List<String> idDefList = Arrays.asList("*");
 			List<String> edDefList = Arrays.asList("");
 			String section_trans = Main.MODID + ".config.";
@@ -209,6 +235,11 @@ public class MyConfig
 					.comment("Blocks that bypass claims on right click")
 					.translation(section_trans + "bypass_blocks")
 					.defineList("BypassBlocks", bbDefList, Common::isString);
+
+			bypassEntities = builder
+					.comment("Entities that bypass claims on right click")
+					.translation(section_trans + "bypass_entities")
+					.defineList("BypassEntities", beDefList, Common::isString);
 
 			includeDims = builder
 					.comment("Include dimensions")

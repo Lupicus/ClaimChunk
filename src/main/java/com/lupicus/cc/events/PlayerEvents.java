@@ -276,6 +276,8 @@ public class PlayerEvents
 			if (cte.grantAccess(player))
 				return;
 		}
+		if (MyConfig.bypassEntities.contains(event.getTarget().getType()))
+			return;
 		if (event.isCancelable())
 		{
 			event.setCanceled(true);
@@ -300,6 +302,8 @@ public class PlayerEvents
 			if (cte.grantAccess(player))
 				return;
 		}
+		if (MyConfig.bypassEntities.contains(event.getTarget().getType()))
+			return;
 		if (event.isCancelable())
 		{
 			event.setCanceled(true);
