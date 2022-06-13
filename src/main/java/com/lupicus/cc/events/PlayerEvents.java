@@ -4,8 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import com.lupicus.cc.Main;
 import com.lupicus.cc.block.ClaimBlock;
@@ -13,6 +12,7 @@ import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
+import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
@@ -54,7 +54,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 @Mod.EventBusSubscriber(bus = Bus.FORGE, modid = Main.MODID)
 public class PlayerEvents
 {
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogUtils.getLogger();
 
 	/** LeftClickBlock replacement */
 	public static boolean cancelBlockClick(Level world, BlockPos pos, Player player)
@@ -77,7 +77,7 @@ public class PlayerEvents
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onRightClick(RightClickBlock event)
 	{
-		Player player = event.getPlayer();
+		Player player = event.getEntity();
 		Level world = player.level;
 		if (world.isClientSide)
 			return;
@@ -125,7 +125,7 @@ public class PlayerEvents
 		Level world = entity.level;
 		if (world.isClientSide)
 			return;
-		Player player = event.getPlayer();
+		Player player = event.getEntity();
 		ClaimInfo info = ClaimManager.get(world, entity.blockPosition());
 		if (info.okPerm(player) || player.hasPermissions(3))
 			return;
@@ -146,7 +146,7 @@ public class PlayerEvents
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onAttack(LivingAttackEvent event)
 	{
-		LivingEntity entity = event.getEntityLiving();
+		LivingEntity entity = event.getEntity();
 		if (entity.getSoundSource() == SoundSource.HOSTILE || entity instanceof Player)
 			return;
 		Level world = entity.level;
@@ -262,7 +262,7 @@ public class PlayerEvents
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onInteractAt(EntityInteractSpecific event)
 	{
-		Player player = event.getPlayer();
+		Player player = event.getEntity();
 		Level world = player.level;
 		if (world.isClientSide)
 			return;
@@ -288,7 +288,7 @@ public class PlayerEvents
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onInteract(EntityInteract event)
 	{
-		Player player = event.getPlayer();
+		Player player = event.getEntity();
 		Level world = player.level;
 		if (world.isClientSide)
 			return;
@@ -317,7 +317,7 @@ public class PlayerEvents
 		HitResult target = event.getTarget();
 		if (target.getType() == HitResult.Type.BLOCK)
 		{
-			Player player = event.getPlayer();
+			Player player = event.getEntity();
 			Level world = player.level;
 			if (world.isClientSide)
 				return;
@@ -385,7 +385,7 @@ public class PlayerEvents
 	public static void onRightClickItem(RightClickItem event)
 	{
 		ItemStack stack = event.getItemStack();
-		if (stack.getItem() == Items.PAPER && event.getPlayer().isShiftKeyDown())
-			ClaimBlock.clearPaper(stack, event.getPlayer());
+		if (stack.getItem() == Items.PAPER && event.getEntity().isShiftKeyDown())
+			ClaimBlock.clearPaper(stack, event.getEntity());
 	}
 }

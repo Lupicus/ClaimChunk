@@ -8,14 +8,12 @@ import com.lupicus.cc.tileentity.ClaimTileEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.chat.NarratorChatListener;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -29,7 +27,7 @@ public class ClaimScreen extends Screen
 	private boolean activate = false;
 
 	public ClaimScreen(ClaimTileEntity te) {
-		super(NarratorChatListener.NO_TITLE);
+		super(CommonComponents.EMPTY); // to bridge 1.19.1+ (GameNarrator.NO_TITLE)
 		this.te = te;
 	}
 
@@ -37,19 +35,19 @@ public class ClaimScreen extends Screen
 	protected void init() {
 		minecraft.keyboardHandler.setSendRepeatsToGui(true);
 		access = new EditBox(font, width / 2 - 152, 20, 300, 20,
-				new TranslatableComponent("cc.gui.access"));
+				Component.translatable("cc.gui.access"));
 		access.setMaxLength(256);
 		access.setValue(te.getAccess());
 		addWidget(access);
 		modify = new EditBox(font, width / 2 - 152, 60, 300, 20,
-				new TranslatableComponent("cc.gui.modify"));
+				Component.translatable("cc.gui.modify"));
 		modify.setMaxLength(256);
 		modify.setValue(te.getModify());
 		addWidget(modify);
 		if (!isEnabled())
 		{
 			enabled = addRenderableWidget(new Button(width / 2 - 4 - 150, 90, 150, 20,
-					new TranslatableComponent("cc.gui.enable"), (button) -> {
+					Component.translatable("cc.gui.enable"), (button) -> {
 						activate = !activate;
 					}) {
 				@Override

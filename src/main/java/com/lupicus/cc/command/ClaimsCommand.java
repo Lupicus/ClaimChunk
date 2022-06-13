@@ -18,8 +18,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -83,7 +82,7 @@ public class ClaimsCommand
 		if (list.isEmpty())
 		{
 			String msg = (string == null) ? "noclaims.you" : "noclaims";
-			source.sendSuccess(new TranslatableComponent(Main.MODID + ".message." + msg), false);
+			source.sendSuccess(Component.translatable(Main.MODID + ".message." + msg), false);
 			return 0;
 		}
 		StringBuilder msg = new StringBuilder();
@@ -96,7 +95,7 @@ public class ClaimsCommand
 			msg.append(String.valueOf(count) + "= " + dim + " " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + "\n");
 		}
 		msg.setLength(msg.length() - 1);
-		source.sendSuccess(new TextComponent(msg.toString()), false);
+		source.sendSuccess(Component.literal(msg.toString()), false);
 		return 1;
 	}
 
@@ -109,7 +108,7 @@ public class ClaimsCommand
 		List<GlobalPos> list = ClaimManager.getList(uuid);
 		if (list.isEmpty())
 		{
-			source.sendSuccess(new TranslatableComponent(Main.MODID + ".message.noclaims"), false);
+			source.sendSuccess(Component.translatable(Main.MODID + ".message.noclaims"), false);
 			return 0;
 		}
 		for (GlobalPos g : list)
@@ -137,7 +136,7 @@ public class ClaimsCommand
 		List<GlobalPos> list = ClaimManager.getList(uuid);
 		if (list.isEmpty())
 		{
-			source.sendSuccess(new TranslatableComponent(Main.MODID + ".message.noclaims"), false);
+			source.sendSuccess(Component.translatable(Main.MODID + ".message.noclaims"), false);
 			return 0;
 		}
 		int count = 0;
@@ -158,7 +157,7 @@ public class ClaimsCommand
 			if (flag && ClaimManager.remove(dim, pos, uuid))
 				count++;
 		}
-		source.sendSuccess(new TextComponent("Removed " + count + " bad claim chunks"), false);
+		source.sendSuccess(Component.literal("Removed " + count + " bad claim chunks"), false);
 		return 1;
 	}
 }

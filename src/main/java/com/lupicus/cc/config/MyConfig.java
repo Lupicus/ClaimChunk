@@ -8,10 +8,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import com.lupicus.cc.Main;
+import com.mojang.logging.LogUtils;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -32,7 +32,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 @Mod.EventBusSubscriber(modid = Main.MODID, bus=Mod.EventBusSubscriber.Bus.MOD)
 public class MyConfig
 {
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogUtils.getLogger();
 	public static final Common COMMON;
 	public static final ForgeConfigSpec COMMON_SPEC;
 	static
@@ -128,7 +128,7 @@ public class MyConfig
 	private static Set<EntityType<?>> entitySet(List<? extends String> list)
 	{
 		Set<EntityType<?>> ret = new HashSet<>();
-		IForgeRegistry<EntityType<?>> reg = ForgeRegistries.ENTITIES;
+		IForgeRegistry<EntityType<?>> reg = ForgeRegistries.ENTITY_TYPES;
 		for (String name : emptyFilter(list))
 		{
 			try {

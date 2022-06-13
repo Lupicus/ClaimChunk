@@ -20,7 +20,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -101,7 +100,7 @@ public class ClaimBlock extends Block implements EntityBlock
 					;
 				else if (!player.getUUID().equals(cte.owner))
 				{
-					player.displayClientMessage(new TranslatableComponent("cc.message.block.not_owner"), true);
+					player.displayClientMessage(Component.translatable("cc.message.block.not_owner"), true);
 					return InteractionResult.FAIL;
 				}
 				ItemStack stack = player.getItemInHand(handIn);
@@ -179,7 +178,7 @@ public class ClaimBlock extends Block implements EntityBlock
 				ChunkPos cpos = new ChunkPos(pos);
 				if (scpos.getChessboardDistance(cpos) <= MyConfig.chunksFromSpawn)
 				{
-					player.displayClientMessage(new TranslatableComponent("cc.message.spawn"), true);
+					player.displayClientMessage(Component.translatable("cc.message.spawn"), true);
 					return null;
 				}
 			}
@@ -187,7 +186,7 @@ public class ClaimBlock extends Block implements EntityBlock
 			{
 				if (ClaimManager.mapCount.getOrDefault(player.getUUID(), 0) >= MyConfig.claimLimit)
 				{
-					player.displayClientMessage(new TranslatableComponent("cc.message.claim_limit"), true);
+					player.displayClientMessage(Component.translatable("cc.message.claim_limit"), true);
 					return null;
 				}
 			}
@@ -263,7 +262,7 @@ public class ClaimBlock extends Block implements EntityBlock
 			}
 			else
 			{
-				player.displayClientMessage(new TranslatableComponent("cc.message.claim"), true);
+				player.displayClientMessage(Component.translatable("cc.message.claim"), true);
 				ClaimManager.add(worldIn, pos, player);
 			}
 		}
@@ -283,14 +282,14 @@ public class ClaimBlock extends Block implements EntityBlock
 				claimed = false;
 			else if (!cinfo.okPerm(player))
 			{
-				player.displayClientMessage(new TranslatableComponent("cc.message.block.not_owner"), true);
+				player.displayClientMessage(Component.translatable("cc.message.block.not_owner"), true);
 				return false;
 			}
 		}
 		boolean flag = super.onDestroyedByPlayer(state, world, pos, player, willHarvest, fluid);
 		if (flag && claimed)
 		{
-			player.displayClientMessage(new TranslatableComponent("cc.message.unclaim"), true);
+			player.displayClientMessage(Component.translatable("cc.message.unclaim"), true);
 			ClaimManager.remove(world, pos);
 		}
 		return flag;
@@ -332,7 +331,7 @@ public class ClaimBlock extends Block implements EntityBlock
 				boolean doCheck = !player.hasPermissions(3);
 				if (doCheck && ClaimManager.mapCount.getOrDefault(owner, 0) >= MyConfig.claimLimit)
 				{
-					player.displayClientMessage(new TranslatableComponent("cc.message.claim_limit"), true);
+					player.displayClientMessage(Component.translatable("cc.message.claim_limit"), true);
 					return;
 				}
 				ClaimManager.add(world, pos, owner);
@@ -370,13 +369,13 @@ public class ClaimBlock extends Block implements EntityBlock
 	{
 		CompoundTag tag = stack.getOrCreateTagElement("display");
 		ListTag list = new ListTag();
-		list.add(StringTag.valueOf(Component.Serializer.toJson(new TranslatableComponent("cc.lore.paper"))));
+		list.add(StringTag.valueOf(Component.Serializer.toJson(Component.translatable("cc.lore.paper"))));
 		tag.put("Lore", list);
 	}
 
 	public static MutableComponent makeMsg(String trans, ClaimInfo info)
 	{
-		MutableComponent msg = new TranslatableComponent(trans);
+		MutableComponent msg = Component.translatable(trans);
 		if (MyConfig.addOwner)
 			msg.append(": " + ClaimManager.getName(info));
 		return msg;

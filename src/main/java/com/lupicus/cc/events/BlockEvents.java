@@ -15,9 +15,6 @@ import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
-import net.minecraftforge.event.world.ExplosionEvent;
-import net.minecraftforge.event.world.PistonEvent;
-import net.minecraftforge.event.world.PistonEvent.PistonMoveType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
@@ -34,11 +31,14 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.event.world.BlockEvent.BreakEvent;
-import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
-import net.minecraftforge.event.world.BlockEvent.EntityPlaceEvent;
-import net.minecraftforge.event.world.BlockEvent.FarmlandTrampleEvent;
-import net.minecraftforge.event.world.BlockEvent.FluidPlaceBlockEvent;
+import net.minecraftforge.event.level.BlockEvent.BreakEvent;
+import net.minecraftforge.event.level.BlockEvent.EntityMultiPlaceEvent;
+import net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent;
+import net.minecraftforge.event.level.BlockEvent.FarmlandTrampleEvent;
+import net.minecraftforge.event.level.BlockEvent.FluidPlaceBlockEvent;
+import net.minecraftforge.event.level.ExplosionEvent;
+import net.minecraftforge.event.level.PistonEvent;
+import net.minecraftforge.event.level.PistonEvent.PistonMoveType;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -72,7 +72,7 @@ public class BlockEvents
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onExplosionDetonate(ExplosionEvent.Detonate event)
 	{
-		Level world = event.getWorld();
+		Level world = event.getLevel();
 		List<BlockPos> list = event.getAffectedBlocks();
 		HashMap<ChunkPos, Boolean> cfilter = new HashMap<>();
 		LivingEntity entity = event.getExplosion().getSourceMob();
@@ -226,7 +226,7 @@ public class BlockEvents
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onTrample(FarmlandTrampleEvent event)
 	{
-		LevelAccessor iworld = event.getWorld();
+		LevelAccessor iworld = event.getLevel();
 		if (iworld.isClientSide())
 			return;
 		Entity entity = event.getEntity();
@@ -253,7 +253,7 @@ public class BlockEvents
 	public static void onFluid(FluidPlaceBlockEvent event)
 	{
 		// this seems to be when fluid changes the state of a block
-		LevelAccessor iworld = event.getWorld();
+		LevelAccessor iworld = event.getLevel();
 		ChunkPos lpos = new ChunkPos(event.getLiquidPos());
 		ChunkPos npos = new ChunkPos(event.getPos());
 		if (lpos.equals(npos))
@@ -282,7 +282,7 @@ public class BlockEvents
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onPiston(PistonEvent.Pre event)
 	{
-		LevelAccessor iworld = event.getWorld();
+		LevelAccessor iworld = event.getLevel();
 		if (iworld.isClientSide())
 			return;
 		PistonStructureResolver helper = event.getStructureHelper();

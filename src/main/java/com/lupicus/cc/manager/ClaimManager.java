@@ -19,11 +19,11 @@ import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.UUID;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import com.lupicus.cc.config.MyConfig;
 import com.mojang.authlib.GameProfile;
+import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -39,7 +39,7 @@ import net.minecraft.world.level.storage.LevelResource;
 
 public class ClaimManager
 {
-	public static final Logger LOGGER = LogManager.getLogger();
+	public static final Logger LOGGER = LogUtils.getLogger();
 	public static final HashMap<GlobalPos, ClaimInfo> mapInfo = new HashMap<>();
 	public static final HashMap<UUID, Integer> mapCount = new HashMap<>();
 	public static final int VERSION = 100;
