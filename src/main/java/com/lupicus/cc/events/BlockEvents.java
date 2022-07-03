@@ -39,6 +39,7 @@ import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityPlaceEvent;
 import net.minecraftforge.event.world.BlockEvent.FarmlandTrampleEvent;
 import net.minecraftforge.event.world.BlockEvent.FluidPlaceBlockEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
@@ -46,7 +47,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 @Mod.EventBusSubscriber(bus = Bus.FORGE, modid = Main.MODID)
 public class BlockEvents
 {
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onBreakBlock(BreakEvent event)
 	{
 		Player player = event.getPlayer();
@@ -68,7 +69,7 @@ public class BlockEvents
 			event.setCanceled(true);
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onExplosionDetonate(ExplosionEvent.Detonate event)
 	{
 		Level world = event.getWorld();
@@ -131,7 +132,7 @@ public class BlockEvents
 		}
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onPlaceEvent(EntityPlaceEvent event)
 	{
 		if (event instanceof EntityMultiPlaceEvent)
@@ -162,7 +163,7 @@ public class BlockEvents
 		}
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onPlaceEvent(EntityMultiPlaceEvent event)
 	{
 		Entity entity = event.getEntity();
@@ -222,7 +223,7 @@ public class BlockEvents
     	player.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), index, itemstack));
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onTrample(FarmlandTrampleEvent event)
 	{
 		LevelAccessor iworld = event.getWorld();
@@ -278,7 +279,7 @@ public class BlockEvents
 		}
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onPiston(PistonEvent.Pre event)
 	{
 		LevelAccessor iworld = event.getWorld();

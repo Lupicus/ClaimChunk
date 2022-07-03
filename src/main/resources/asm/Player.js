@@ -32,12 +32,27 @@ function initializeCoreMod() {
 
 // add conditional return
 function patch_m_5706_(obj) {
-	var fn = asmapi.mapMethod('m_20280_') // distanceToSqr
-	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, "net/minecraft/world/entity/player/Player", fn, "(Lnet/minecraft/world/entity/Entity;)D")
+	var code = 0
+	var fn = 'canHit'
+	var owner = "net/minecraft/world/entity/player/Player"
+	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, owner, fn, "(Lnet/minecraft/world/entity/Entity;D)Z")
+	if (node == null) {
+		code = 1
+		fn = asmapi.mapMethod('m_20280_') // distanceToSqr
+		node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, owner, fn, "(Lnet/minecraft/world/entity/Entity;)D")
+	}
 	if (node) {
+		var test = opc.IFEQ
 		var node2 = node.getPrevious()
-		node = node.getNext().getNext().getNext()
-		if (node2.getOpcode() == opc.ALOAD && node.getOpcode() == opc.IFGE) {
+		node = node.getNext()
+		if (code == 0) {
+			node2 = node2.getPrevious()
+		}
+		else {
+			node = node.getNext().getNext()
+			test = opc.IFGE
+		}
+		if (node2.getOpcode() == opc.ALOAD && node.getOpcode() == test) {
 			var lb = node.label
 			var op1 = new VarInsnNode(opc.ALOAD, 0)
 			var op2 = new VarInsnNode(opc.ALOAD, node2.var)
