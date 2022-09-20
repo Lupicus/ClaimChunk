@@ -1,5 +1,6 @@
 package com.lupicus.cc.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -79,12 +80,12 @@ public class MyConfig
 		claimLimit = COMMON.claimLimit.get();
 		bypassBlocks = blockSet(COMMON.bypassBlocks.get());
 		bypassEntities = entitySet(COMMON.bypassEntities.get());
-		String[] temp = extract(COMMON.includeDims.get());
+		String[] temp = toArray(COMMON.includeDims.get());
 		allDims = hasAll(temp);
 		if (allDims)
 			temp = new String[0];
 		includeDimSet = stringSet(temp);
-		excludeDimSet = stringSet(extract(COMMON.excludeDims.get()));
+		excludeDimSet = stringSet(toArray(COMMON.excludeDims.get()));
 	}
 
 	private static Set<String> stringSet(String[] values)
@@ -101,7 +102,7 @@ public class MyConfig
 	{
 		Set<Block> ret = new HashSet<>();
 		IForgeRegistry<Block> reg = ForgeRegistries.BLOCKS;
-		for (String name : list)
+		for (String name : emptyFilter(list))
 		{
 			int i = name.indexOf(":*");
 			if (i > 0)
@@ -128,7 +129,7 @@ public class MyConfig
 	{
 		Set<EntityType<?>> ret = new HashSet<>();
 		IForgeRegistry<EntityType<?>> reg = ForgeRegistries.ENTITIES;
-		for (String name : list)
+		for (String name : emptyFilter(list))
 		{
 			try {
 				ResourceLocation res = new ResourceLocation(name);
@@ -181,9 +182,19 @@ public class MyConfig
 		return false;
 	}
 
-	private static String[] extract(List<? extends String> value)
+	private static String[] toArray(List<? extends String> value)
 	{
-		return value.toArray(new String[value.size()]);
+		return isEmpty(value) ? new String[0] : value.toArray(new String[value.size()]);
+	}
+
+	private static List<? extends String> emptyFilter(List<? extends String> value)
+	{
+		return isEmpty(value) ? new ArrayList<>() : value;
+	}
+
+	private static boolean isEmpty(List<? extends String> value)
+	{
+		return value.isEmpty() || (value.size() == 1 && value.get(0).isEmpty());
 	}
 
 	public static class Common
