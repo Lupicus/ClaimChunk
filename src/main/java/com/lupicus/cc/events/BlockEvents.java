@@ -75,7 +75,7 @@ public class BlockEvents
 		Level world = event.getLevel();
 		List<BlockPos> list = event.getAffectedBlocks();
 		HashMap<ChunkPos, Boolean> cfilter = new HashMap<>();
-		LivingEntity entity = event.getExplosion().getSourceMob();
+		LivingEntity entity = event.getExplosion().getIndirectSourceEntity();
 		Player player = null;
 		if (entity instanceof Mob)
 		{

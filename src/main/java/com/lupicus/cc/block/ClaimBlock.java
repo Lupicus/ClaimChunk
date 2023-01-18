@@ -201,7 +201,7 @@ public class ClaimBlock extends Block implements EntityBlock
 		boolean flag = state.getValue(ENABLED);
 		if (flag && MyConfig.pvpMode)
 		{
-			LivingEntity entity = explosion.getSourceMob();
+			LivingEntity entity = explosion.getIndirectSourceEntity();
 			if (entity instanceof Mob)
 			{
 				if (MyConfig.mobDestroy)

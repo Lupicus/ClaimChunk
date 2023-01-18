@@ -15,6 +15,7 @@ import com.lupicus.cc.tileentity.ModTileEntities;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
+import net.minecraftforge.event.CreativeModeTabEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -61,6 +62,12 @@ public class Main
 	    		ModItems.register(event.getForgeRegistry());
 	    	else if (key.equals(ForgeRegistries.Keys.BLOCK_ENTITY_TYPES))
 	    		ModTileEntities.register(event.getForgeRegistry());
+	    }
+
+	    @SubscribeEvent
+	    public static void onCreativeTab(CreativeModeTabEvent.BuildContents event)
+	    {
+	    	ModItems.setupTabs(event);
 	    }
 	}
 

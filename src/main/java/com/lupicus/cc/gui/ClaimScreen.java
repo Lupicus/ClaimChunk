@@ -7,8 +7,10 @@ import com.lupicus.cc.tileentity.ClaimTileEntity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import net.minecraft.client.GameNarrator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
@@ -22,18 +24,17 @@ public class ClaimScreen extends Screen
 	ClaimTileEntity te;
 	private EditBox access;
 	private EditBox modify;
-	private Button enabled;
+	private CycleButton<Boolean> enabled;
 	private Button done;
 	private boolean activate = false;
 
 	public ClaimScreen(ClaimTileEntity te) {
-		super(CommonComponents.EMPTY); // to bridge 1.19.1+ (GameNarrator.NO_TITLE)
+		super(GameNarrator.NO_TITLE);
 		this.te = te;
 	}
 
 	@Override
 	protected void init() {
-		minecraft.keyboardHandler.setSendRepeatsToGui(true);
 		access = new EditBox(font, width / 2 - 152, 20, 300, 20,
 				Component.translatable("cc.gui.access"));
 		access.setMaxLength(256);
@@ -46,26 +47,21 @@ public class ClaimScreen extends Screen
 		addWidget(modify);
 		if (!isEnabled())
 		{
-			enabled = addRenderableWidget(new Button(width / 2 - 4 - 150, 90, 150, 20,
-					Component.translatable("cc.gui.enable"), (button) -> {
-						activate = !activate;
-					}) {
-				@Override
-				public Component getMessage() {
-					return CommonComponents.optionStatus(super.getMessage(), ClaimScreen.this.activate);
-				}
-			});
+			enabled = addRenderableWidget(CycleButton.onOffBuilder(activate).create(width / 2 - 4 - 150, 90, 150, 20,
+					Component.translatable("cc.gui.enable"), (button, value) -> {
+						activate = value;
+					}));
 		}
 		// done
 		done = addRenderableWidget(
-				new Button(width / 2 - 4 - 150, 210, 150, 20, CommonComponents.GUI_DONE, (p_238825_1_) -> {
+				Button.builder(CommonComponents.GUI_DONE, (button) -> {
 					doneCB();
-				}));
+				}).bounds(width / 2 - 4 - 150, 210, 150, 20).build());
 		// cancel
 		addRenderableWidget(
-				new Button(width / 2 + 4, 210, 150, 20, CommonComponents.GUI_CANCEL, (p_238825_1_) -> {
+				Button.builder(CommonComponents.GUI_CANCEL, (button) -> {
 					cancelCB();
-				}));
+				}).bounds(width / 2 + 4, 210, 150, 20).build());
 		setInitialFocus(access);
 	}
 
@@ -76,11 +72,6 @@ public class ClaimScreen extends Screen
 		init(p_231152_1_, p_231152_2_, p_231152_3_);
 		access.setValue(s);
 		modify.setValue(s1);
-	}
-
-	@Override
-	public void removed() {
-		minecraft.keyboardHandler.setSendRepeatsToGui(false);
 	}
 
 	@Override

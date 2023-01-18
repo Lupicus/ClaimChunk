@@ -27,7 +27,7 @@ import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -341,7 +341,7 @@ public class ClaimManager
 			StringBuffer buf = new StringBuffer(len);
 			for (int j = 0; j < len; ++j)
 				buf.append(fd.readChar());
-			dimList[i] = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(buf.toString()));
+			dimList[i] = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(buf.toString()));
 		}
 
 		// read positions
