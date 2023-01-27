@@ -45,6 +45,7 @@ public class MyConfig
 	public static boolean addOwner;
 	public static boolean mobDestroy;
 	public static boolean pvpMode;
+	public static boolean reportBucket;
 	public static int chunksFromSpawn;
 	public static int claimLimit;
 	public static Set<Block> bypassBlocks;
@@ -76,6 +77,7 @@ public class MyConfig
 		addOwner = COMMON.addOwner.get();
 		mobDestroy = COMMON.mobDestroy.get();
 		pvpMode = COMMON.pvpMode.get();
+		reportBucket = COMMON.reportBucket.get();
 		chunksFromSpawn = COMMON.chunksFromSpawn.get();
 		claimLimit = COMMON.claimLimit.get();
 		bypassBlocks = blockSet(COMMON.bypassBlocks.get());
@@ -202,6 +204,7 @@ public class MyConfig
 		public final BooleanValue addOwner;
 		public final BooleanValue mobDestroy;
 		public final BooleanValue pvpMode;
+		public final BooleanValue reportBucket;
 		public final IntValue chunksFromSpawn;
 		public final IntValue claimLimit;
 		public final ConfigValue<List<? extends String>> bypassBlocks;
@@ -231,6 +234,11 @@ public class MyConfig
 					.comment("Explosions caused by any player can destroy blocks")
 					.translation(section_trans + "player_destroy")
 					.define("PvpMode", false);
+
+			reportBucket = builder
+					.comment("Report placing fluid from a bucket")
+					.translation(section_trans + "report_bucket")
+					.define("ReportBucket", false);
 
 			chunksFromSpawn = builder
 					.comment("Chunks from world spawn")
