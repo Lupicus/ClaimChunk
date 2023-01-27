@@ -371,7 +371,7 @@ public class PlayerEvents
 			}
 			if (flag)
 			{
-				if (fluid != Fluids.EMPTY)
+				if (fluid != Fluids.EMPTY && MyConfig.reportBucket)
 					LOGGER.info("Placing " + stack + " @ " + world.dimension().location() + " " + blockpos + " by " + player.getName().getString());
 				return;
 			}

@@ -1,5 +1,6 @@
 {
 	"AbsState": "asm/AbsState.js",
 	"ArmorStand": "asm/ArmorStand.js",
+	"FlowingFluid": "asm/FlowingFluid.js",
 	"Player": "asm/Player.js"
 }
