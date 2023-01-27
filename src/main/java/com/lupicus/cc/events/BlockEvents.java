@@ -24,19 +24,21 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.event.world.ExplosionEvent;
-import net.minecraftforge.event.world.PistonEvent;
-import net.minecraftforge.event.world.PistonEvent.PistonMoveType;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityPlaceEvent;
 import net.minecraftforge.event.world.BlockEvent.FarmlandTrampleEvent;
 import net.minecraftforge.event.world.BlockEvent.FluidPlaceBlockEvent;
+import net.minecraftforge.event.world.ExplosionEvent;
+import net.minecraftforge.event.world.PistonEvent;
+import net.minecraftforge.event.world.PistonEvent.PistonMoveType;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -269,6 +271,35 @@ public class BlockEvents
 			}
 			event.setNewState(event.getOriginalState());
 		}
+	}
+
+	public static boolean canSpreadTo(IBlockReader iworld, BlockPos fromPos, BlockPos toPos, Direction dir)
+	{
+		if (dir.getAxis() == Axis.Y)
+			return true;
+		ChunkPos lpos = new ChunkPos(fromPos);
+		ChunkPos npos = new ChunkPos(toPos);
+		if (lpos.equals(npos))
+			return true;
+		if (iworld instanceof World)
+		{
+			World world = (World) iworld;
+			ClaimInfo ninfo = ClaimManager.get(world, npos);
+			if (ninfo.owner == null)
+				return true;
+			ClaimInfo linfo = ClaimManager.get(world, lpos);
+			if (ninfo.owner.equals(linfo.owner))
+				return true;
+			TileEntity te = world.getTileEntity(ninfo.pos.getPos());
+			if (te instanceof ClaimTileEntity)
+			{
+				ClaimTileEntity cte = (ClaimTileEntity) te;
+				String name = (linfo.owner == null) ? "*" : ClaimManager.getName(linfo);
+				if (cte.grantModify(name))
+					return true;
+			}
+		}
+		return false;
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
