@@ -17,6 +17,7 @@ import com.lupicus.cc.tileentity.ClaimTileEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -25,6 +26,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -277,6 +279,35 @@ public class BlockEvents
 			}
 			event.setNewState(event.getOriginalState());
 		}
+	}
+
+	public static boolean canSpreadTo(BlockGetter iworld, BlockPos fromPos, BlockPos toPos, Direction dir)
+	{
+		if (dir.getAxis() == Axis.Y)
+			return true;
+		ChunkPos lpos = new ChunkPos(fromPos);
+		ChunkPos npos = new ChunkPos(toPos);
+		if (lpos.equals(npos))
+			return true;
+		if (iworld instanceof Level)
+		{
+			Level world = (Level) iworld;
+			ClaimInfo ninfo = ClaimManager.get(world, npos);
+			if (ninfo.owner == null)
+				return true;
+			ClaimInfo linfo = ClaimManager.get(world, lpos);
+			if (ninfo.owner.equals(linfo.owner))
+				return true;
+			BlockEntity te = world.getBlockEntity(ninfo.pos.pos());
+			if (te instanceof ClaimTileEntity)
+			{
+				ClaimTileEntity cte = (ClaimTileEntity) te;
+				String name = (linfo.owner == null) ? "*" : ClaimManager.getName(linfo);
+				if (cte.grantModify(name))
+					return true;
+			}
+		}
+		return false;
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
