@@ -13,15 +13,18 @@ import com.lupicus.cc.block.ModBlocks;
 import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
+import com.lupicus.cc.network.ChangeBlockPacket;
+import com.lupicus.cc.network.Network;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.block.PistonBlockStructureHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.inventory.IClearable;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
@@ -55,7 +58,7 @@ public class BlockEvents
 		if (world.isRemote)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return;
 		TileEntity te = world.getTileEntity(info.pos.getPos());
 		if (te instanceof ClaimTileEntity)
@@ -66,7 +69,17 @@ public class BlockEvents
 		}
 		player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 		if (event.isCancelable())
+		{
 			event.setCanceled(true);
+			ServerPlayerEntity sp = (ServerPlayerEntity) player;
+			if (sp.connection != null)
+			{
+				// fix client side view of some blocks (e.g. redstone wire)
+				BlockState state = event.getState();
+				if (!state.isSolid())
+					Network.sendToClient(new ChangeBlockPacket(event.getPos(), state), sp);
+			}
+		}
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
@@ -143,7 +156,7 @@ public class BlockEvents
 		PlayerEntity player = (PlayerEntity) entity;
 		World world = player.world;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return;
 		if (event.getPlacedBlock().getBlock() != ModBlocks.CLAIM_BLOCK)
 		{
@@ -159,7 +172,10 @@ public class BlockEvents
 		{
 			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
-			updateHands((ServerPlayerEntity) player);
+			TileEntity te = world.getTileEntity(event.getPos());
+			if (te != null)
+				IClearable.clearObj(te);
+			Utility.updateHands((ServerPlayerEntity) player);
 		}
 	}
 
@@ -181,7 +197,7 @@ public class BlockEvents
 			{
 				prev = pos;
 				info = ClaimManager.get(world, pos);
-				if (info.okPerm(player) || player.hasPermissionLevel(3))
+				if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 					continue;
 				TileEntity te = world.getTileEntity(info.pos.getPos());
 				if (te instanceof ClaimTileEntity)
@@ -198,23 +214,8 @@ public class BlockEvents
 		{
 			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
-			updateHands((ServerPlayerEntity) player);
+			Utility.updateHands((ServerPlayerEntity) player);
 		}
-	}
-
-	/**
-	 * fix client side view of the hotbar for non creative
-	 */
-	private static void updateHands(ServerPlayerEntity player)
-	{
-		if (player.connection == null)
-			return;
-		ItemStack itemstack = player.inventory.getCurrentItem();
-		if (!itemstack.isEmpty())
-			player.sendSlotContents(player.container, 36 + player.inventory.currentItem, itemstack);
-		itemstack = player.inventory.offHandInventory.get(0);
-		if (!itemstack.isEmpty())
-			player.sendSlotContents(player.container, 45, itemstack);
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)

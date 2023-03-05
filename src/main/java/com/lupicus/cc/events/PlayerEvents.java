@@ -12,6 +12,8 @@ import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
+import com.lupicus.cc.network.ChangeBlockPacket;
+import com.lupicus.cc.network.Network;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
 import net.minecraft.block.Block;
@@ -60,7 +62,7 @@ public class PlayerEvents
 		if (world.isRemote)
 			return false;
 		ClaimInfo info = ClaimManager.get(world, pos);
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return false;
 		TileEntity te = world.getTileEntity(info.pos.getPos());
 		if (te instanceof ClaimTileEntity)
@@ -80,7 +82,7 @@ public class PlayerEvents
 		if (world.isRemote)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return;
 		TileEntity te = world.getTileEntity(info.pos.getPos());
 		if (te instanceof ClaimTileEntity)
@@ -98,12 +100,15 @@ public class PlayerEvents
 		if (event.isCancelable())
 		{
 			event.setCanceled(true);
-			// fix client side view of the hotbar for non creative
-			ItemStack itemstack = player.getHeldItem(h);
-			if (!itemstack.isEmpty())
+			ServerPlayerEntity sp = (ServerPlayerEntity) player;
+			if (sp.connection != null)
 			{
-				ServerPlayerEntity sp = (ServerPlayerEntity) player;
-				if (sp.connection != null)
+				// fix client side view of some blocks (e.g. door)
+				if (!state.isSolid())
+					Network.sendToClient(new ChangeBlockPacket(event.getPos(), state), sp);
+				// fix client side view of the hotbar for non creative
+				ItemStack itemstack = player.getHeldItem(h);
+				if (!itemstack.isEmpty())
 				{
 					int index = 36 + ((h == Hand.MAIN_HAND) ? sp.inventory.currentItem : 9);
 					sp.sendSlotContents(sp.container, index, itemstack);
@@ -124,7 +129,7 @@ public class PlayerEvents
 			return;
 		PlayerEntity player = event.getPlayer();
 		ClaimInfo info = ClaimManager.get(world, entity.func_233580_cy_());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return;
 		TileEntity te = world.getTileEntity(info.pos.getPos());
 		if (te instanceof ClaimTileEntity)
@@ -154,7 +159,7 @@ public class PlayerEvents
 			return;
 		PlayerEntity player = (PlayerEntity) srcEntity;
 		ClaimInfo info = ClaimManager.get(world, entity.func_233580_cy_());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return;
 		TileEntity te = world.getTileEntity(info.pos.getPos());
 		if (te instanceof ClaimTileEntity)
@@ -179,7 +184,7 @@ public class PlayerEvents
 		if (world.isRemote)
 			return false;
 		ClaimInfo info = ClaimManager.get(world, entity.func_233580_cy_());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return false;
 		TileEntity te = world.getTileEntity(info.pos.getPos());
 		if (te instanceof ClaimTileEntity)
@@ -202,7 +207,7 @@ public class PlayerEvents
 		if (!(srcEntity instanceof PlayerEntity))
 			return false;
 		PlayerEntity player = (PlayerEntity) srcEntity;
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return false;
 		TileEntity te = world.getTileEntity(info.pos.getPos());
 		if (te instanceof ClaimTileEntity)
@@ -264,7 +269,7 @@ public class PlayerEvents
 		if (world.isRemote)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return;
 		TileEntity te = world.getTileEntity(info.pos.getPos());
 		if (te instanceof ClaimTileEntity)
@@ -290,7 +295,7 @@ public class PlayerEvents
 		if (world.isRemote)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissionLevel(3))
+		if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 			return;
 		TileEntity te = world.getTileEntity(info.pos.getPos());
 		if (te instanceof ClaimTileEntity)
@@ -354,7 +359,7 @@ public class PlayerEvents
 			}
 			ClaimInfo info = ClaimManager.get(world, blockpos);
 			boolean flag = false;
-			if (info.okPerm(player) || player.hasPermissionLevel(3))
+			if (info.okPerm(player) || (player.hasPermissionLevel(3) && player.isCreative()))
 				flag = true;
 			else
 			{
@@ -374,7 +379,10 @@ public class PlayerEvents
 			}
 			player.sendStatusMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			if (event.isCancelable())
+			{
 				event.setCanceled(true);
+				Utility.updateHands((ServerPlayerEntity) player);
+			}
 		}
 	}
 

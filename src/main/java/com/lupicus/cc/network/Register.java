@@ -13,5 +13,10 @@ public class Register
 	    		ClaimScreenPacket::writePacketData,
 	    		ClaimScreenPacket::readPacketData,
 	    		ClaimScreenPacket::processPacket);
+
+	    Network.registerMessage(ChangeBlockPacket.class,
+	    		ChangeBlockPacket::writePacketData,
+	    		ChangeBlockPacket::readPacketData,
+	    		ChangeBlockPacket::processPacket);
 	}
 }

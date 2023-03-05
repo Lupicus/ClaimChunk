@@ -94,7 +94,7 @@ public class ClaimBlock extends Block
 			if (te instanceof ClaimTileEntity)
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
-				if (player.hasPermissionLevel(3))
+				if (player.hasPermissionLevel(3) && player.isCreative())
 					;
 				else if (!player.getUniqueID().equals(cte.owner))
 				{
@@ -165,7 +165,7 @@ public class ClaimBlock extends Block
 			player.sendStatusMessage(makeMsg("cc.message.claimed.chunk", cinfo), true);
 			return null;
 		}
-		if (!player.hasPermissionLevel(3))
+		if (!(player.hasPermissionLevel(3) && player.isCreative()))
 		{
 			if (MyConfig.checkDim(world))
 				return null;
@@ -326,8 +326,8 @@ public class ClaimBlock extends Block
 			ClaimInfo cinfo = ClaimManager.get(world, pos);
 			if (cinfo.owner == null)
 			{
-				boolean doCheck = !player.hasPermissionLevel(3);
-				if (doCheck && ClaimManager.mapCount.getOrDefault(owner, 0) >= MyConfig.claimLimit)
+				boolean opFlag = player.hasPermissionLevel(3) && player.isCreative();
+				if (!opFlag && ClaimManager.mapCount.getOrDefault(owner, 0) >= MyConfig.claimLimit)
 				{
 					player.sendStatusMessage(new TranslationTextComponent("cc.message.claim_limit"), true);
 					return;

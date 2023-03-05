@@ -17,6 +17,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.ISuggestionProvider;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -43,7 +45,12 @@ public class ClaimsCommand
 					return source.hasPermissionLevel(3);
 				})
 				.suggests((ctx, builder) -> {
-					return ISuggestionProvider.suggest(ClaimManager.getPlayers(), builder);
+					String[] list;
+					if (isCreative(ctx.getSource()))
+						list = ClaimManager.getPlayers();
+					else
+						list = new String[0];
+					return ISuggestionProvider.suggest(list, builder);
 				})
 				.executes((ctx) -> {
 					return report(ctx.getSource(), StringArgumentType.getString(ctx, "target"), 0);
@@ -67,9 +74,32 @@ public class ClaimsCommand
 		);
 	}
 
+	private static boolean isCreative(CommandSource source)
+	{
+		Entity e = source.getEntity();
+		boolean creative;
+		if (e == null)
+			creative = true;
+		else if (e instanceof ServerPlayerEntity)
+			creative = ((ServerPlayerEntity) e).isCreative();
+		else
+			creative = false;
+		return creative;
+	}
+
+	private static boolean opCheck(CommandSource source)
+	{
+		if (isCreative(source))
+			return false;
+		source.sendErrorMessage(new StringTextComponent("Must be in Creative Mode to perform this command."));
+		return true;
+	}
+
 	private static int report(CommandSource source, String string, int limit)
 			throws CommandSyntaxException
 	{
+		if (string != null && opCheck(source))
+			return 0;
 		UUID uuid = null;
 		if (string == null)
 			uuid = source.asPlayer().getUniqueID();
@@ -103,9 +133,9 @@ public class ClaimsCommand
 	private static int destroy(CommandSource source, String string)
 			throws CommandSyntaxException
 	{
-		UUID uuid = null;
-		if (string != null)
-			uuid = ClaimManager.getUUID(string);
+		if (opCheck(source))
+			return 0;
+		UUID uuid = ClaimManager.getUUID(string);
 		List<GlobalPos> list = ClaimManager.getList(uuid);
 		if (list.isEmpty())
 		{
@@ -131,9 +161,9 @@ public class ClaimsCommand
 	private static int check(CommandSource source, String string)
 			throws CommandSyntaxException
 	{
-		UUID uuid = null;
-		if (string != null)
-			uuid = ClaimManager.getUUID(string);
+		if (opCheck(source))
+			return 0;
+		UUID uuid = ClaimManager.getUUID(string);
 		List<GlobalPos> list = ClaimManager.getList(uuid);
 		if (list.isEmpty())
 		{
