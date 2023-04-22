@@ -82,7 +82,7 @@ public class ClaimUpdatePacket
 			if (te instanceof ClaimTileEntity)
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
-				if (!player.getUUID().equals(cte.owner) && !player.hasPermissions(3))
+				if (!(player.getUUID().equals(cte.owner) || (player.hasPermissions(3) && player.isCreative())))
 					;  // ignore invalid packet from client
 				else if (message.cmd == 1)
 				{
