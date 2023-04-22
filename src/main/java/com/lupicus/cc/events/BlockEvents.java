@@ -13,25 +13,26 @@ import com.lupicus.cc.block.ModBlocks;
 import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
+import com.lupicus.cc.network.ChangeBlockPacket;
+import com.lupicus.cc.network.Network;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
@@ -57,7 +58,7 @@ public class BlockEvents
 		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
@@ -68,7 +69,17 @@ public class BlockEvents
 		}
 		player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 		if (event.isCancelable())
+		{
 			event.setCanceled(true);
+			ServerPlayer sp = (ServerPlayer) player;
+			if (sp.connection != null)
+			{
+				// fix client side view of some blocks (e.g. redstone wire)
+				BlockState state = event.getState();
+				if (!state.canOcclude())
+					Network.sendToClient(new ChangeBlockPacket(event.getPos(), state), sp);
+			}
+		}
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
@@ -145,7 +156,7 @@ public class BlockEvents
 		Player player = (Player) entity;
 		Level world = player.level;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return;
 		if (event.getPlacedBlock().getBlock() != ModBlocks.CLAIM_BLOCK)
 		{
@@ -161,7 +172,10 @@ public class BlockEvents
 		{
 			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
-			updateHands((ServerPlayer) player);
+			BlockEntity te = world.getBlockEntity(event.getPos());
+			if (te != null)
+				Clearable.tryClear(te);
+			Utility.updateHands((ServerPlayer) player);
 		}
 	}
 
@@ -183,7 +197,7 @@ public class BlockEvents
 			{
 				prev = pos;
 				info = ClaimManager.get(world, pos);
-				if (info.okPerm(player) || player.hasPermissions(3))
+				if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 					continue;
 				BlockEntity te = world.getBlockEntity(info.pos.pos());
 				if (te instanceof ClaimTileEntity)
@@ -200,29 +214,8 @@ public class BlockEvents
 		{
 			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
-			updateHands((ServerPlayer) player);
+			Utility.updateHands((ServerPlayer) player);
 		}
-	}
-
-	/**
-	 * fix client side view of the hotbar for non creative
-	 */
-	private static void updateHands(ServerPlayer player)
-	{
-		if (player.connection == null)
-			return;
-		ItemStack itemstack = player.getInventory().getSelected();
-		if (!itemstack.isEmpty())
-			slotChanged(player, 36 + player.getInventory().selected, itemstack);
-		itemstack = player.getInventory().offhand.get(0);
-		if (!itemstack.isEmpty())
-			slotChanged(player, 45, itemstack);
-	}
-
-	private static void slotChanged(ServerPlayer player, int index, ItemStack itemstack)
-	{
-		InventoryMenu menu = player.inventoryMenu;
-    	player.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), index, itemstack));
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
