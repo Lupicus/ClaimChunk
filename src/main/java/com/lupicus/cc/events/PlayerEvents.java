@@ -11,11 +11,12 @@ import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
+import com.lupicus.cc.network.ChangeBlockPacket;
+import com.lupicus.cc.network.Network;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -23,7 +24,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -62,7 +62,7 @@ public class PlayerEvents
 		if (world.isClientSide)
 			return false;
 		ClaimInfo info = ClaimManager.get(world, pos);
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return false;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
@@ -82,7 +82,7 @@ public class PlayerEvents
 		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
@@ -100,16 +100,18 @@ public class PlayerEvents
 		if (event.isCancelable())
 		{
 			event.setCanceled(true);
-			// fix client side view of the hotbar for non creative
-			ItemStack itemstack = player.getItemInHand(h);
-			if (!itemstack.isEmpty())
+			ServerPlayer sp = (ServerPlayer) player;
+			if (sp.connection != null)
 			{
-				ServerPlayer sp = (ServerPlayer) player;
-				if (sp.connection != null)
+				// fix client side view of some blocks (e.g. door)
+				if (!state.canOcclude())
+					Network.sendToClient(new ChangeBlockPacket(event.getPos(), state), sp);
+				// fix client side view of the hotbar for non creative
+				ItemStack itemstack = player.getItemInHand(h);
+				if (!itemstack.isEmpty())
 				{
 					int index = 36 + ((h == InteractionHand.MAIN_HAND) ? sp.getInventory().selected : 9);
-					InventoryMenu menu = sp.inventoryMenu;
-					sp.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), index, itemstack));
+					Utility.slotChanged(sp, index, itemstack);
 				}
 			}
 		}
@@ -127,7 +129,7 @@ public class PlayerEvents
 			return;
 		Player player = event.getEntity();
 		ClaimInfo info = ClaimManager.get(world, entity.blockPosition());
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
@@ -157,7 +159,7 @@ public class PlayerEvents
 			return;
 		Player player = (Player) srcEntity;
 		ClaimInfo info = ClaimManager.get(world, entity.blockPosition());
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
@@ -182,7 +184,7 @@ public class PlayerEvents
 		if (world.isClientSide)
 			return false;
 		ClaimInfo info = ClaimManager.get(world, entity.blockPosition());
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return false;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
@@ -205,7 +207,7 @@ public class PlayerEvents
 		if (!(srcEntity instanceof Player))
 			return false;
 		Player player = (Player) srcEntity;
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return false;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
@@ -267,7 +269,7 @@ public class PlayerEvents
 		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
@@ -293,7 +295,7 @@ public class PlayerEvents
 		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
-		if (info.okPerm(player) || player.hasPermissions(3))
+		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
@@ -357,7 +359,7 @@ public class PlayerEvents
 			}
 			ClaimInfo info = ClaimManager.get(world, blockpos);
 			boolean flag = false;
-			if (info.okPerm(player) || player.hasPermissions(3))
+			if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 				flag = true;
 			else
 			{
@@ -377,7 +379,10 @@ public class PlayerEvents
 			}
 			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			if (event.isCancelable())
+			{
 				event.setCanceled(true);
+				Utility.updateHands((ServerPlayer) player);
+			}
 		}
 	}
 
