@@ -202,7 +202,7 @@ public class ClaimManager
 	{
 		List<GlobalPos> ret = new ArrayList<>();
 		BlockPos loc = player.blockPosition();
-		ResourceKey<Level> dim = player.level.dimension();
+		ResourceKey<Level> dim = player.level().dimension();
 		PriorityQueue<GPDist> queue = new PriorityQueue<>();
 		for (ClaimInfo e : mapInfo.values())
 		{

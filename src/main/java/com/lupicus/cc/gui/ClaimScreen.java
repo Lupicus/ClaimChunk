@@ -5,10 +5,9 @@ import com.lupicus.cc.network.ClaimUpdatePacket;
 import com.lupicus.cc.network.Network;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.GameNarrator;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
@@ -139,15 +138,15 @@ public class ClaimScreen extends Screen
 	}
 
 	@Override
-	public void render(PoseStack mStack, int mouseX, int mouseY, float partialTicks) {
-		renderBackground(mStack);
-		drawString(mStack, font, I18n.get("cc.gui.access"),
+	public void render(GuiGraphics gg, int mouseX, int mouseY, float partialTicks) {
+		renderBackground(gg);
+		gg.drawString(font, I18n.get("cc.gui.access"),
 				width / 2 - 153, 10, 10526880);
-		access.render(mStack, mouseX, mouseY, partialTicks);
-		drawString(mStack, font, I18n.get("cc.gui.modify"),
+		access.render(gg, mouseX, mouseY, partialTicks);
+		gg.drawString(font, I18n.get("cc.gui.modify"),
 				width / 2 - 153, 50, 10526880);
-		modify.render(mStack, mouseX, mouseY, partialTicks);
+		modify.render(gg, mouseX, mouseY, partialTicks);
 
-		super.render(mStack, mouseX, mouseY, partialTicks);
+		super.render(gg, mouseX, mouseY, partialTicks);
 	}
 }

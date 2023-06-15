@@ -6,7 +6,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Item.Properties;
-import net.minecraftforge.event.CreativeModeTabEvent;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.registries.IForgeRegistry;
 
 public class ModItems
@@ -18,9 +18,9 @@ public class ModItems
 		forgeRegistry.register("claim_block", CLAIM_BLOCK);
 	}
 
-	public static void setupTabs(CreativeModeTabEvent.BuildContents event)
+	public static void setupTabs(BuildCreativeModeTabContentsEvent event)
 	{
-		if (event.getTab() == CreativeModeTabs.FUNCTIONAL_BLOCKS)
+		if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS)
 		{
 			event.accept(CLAIM_BLOCK);
 		}

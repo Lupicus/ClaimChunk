@@ -78,7 +78,7 @@ public class PlayerEvents
 	public static void onRightClick(RightClickBlock event)
 	{
 		Player player = event.getEntity();
-		Level world = player.level;
+		Level world = player.level();
 		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
@@ -124,7 +124,7 @@ public class PlayerEvents
 		Entity entity = event.getTarget();
 		if (entity instanceof LivingEntity)
 			return;
-		Level world = entity.level;
+		Level world = entity.level();
 		if (world.isClientSide)
 			return;
 		Player player = event.getEntity();
@@ -151,7 +151,7 @@ public class PlayerEvents
 		LivingEntity entity = event.getEntity();
 		if (entity.getSoundSource() == SoundSource.HOSTILE || entity instanceof Player)
 			return;
-		Level world = entity.level;
+		Level world = entity.level();
 		if (world.isClientSide)
 			return;
 		Entity srcEntity = event.getSource().getEntity();
@@ -180,7 +180,7 @@ public class PlayerEvents
 	{
 		if (entity.getSoundSource() == SoundSource.HOSTILE || entity instanceof Player)
 			return false;
-		Level world = entity.level;
+		Level world = entity.level();
 		if (world.isClientSide)
 			return false;
 		ClaimInfo info = ClaimManager.get(world, entity.blockPosition());
@@ -199,7 +199,7 @@ public class PlayerEvents
 	/** for armor stand */
 	public static boolean cancelEntityHurt(Entity entity, DamageSource source)
 	{
-		Level world = entity.level;
+		Level world = entity.level();
 		if (world.isClientSide)
 			return false;
 		ClaimInfo info = ClaimManager.get(world, entity.blockPosition());
@@ -265,7 +265,7 @@ public class PlayerEvents
 	public static void onInteractAt(EntityInteractSpecific event)
 	{
 		Player player = event.getEntity();
-		Level world = player.level;
+		Level world = player.level();
 		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
@@ -291,7 +291,7 @@ public class PlayerEvents
 	public static void onInteract(EntityInteract event)
 	{
 		Player player = event.getEntity();
-		Level world = player.level;
+		Level world = player.level();
 		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
@@ -320,7 +320,7 @@ public class PlayerEvents
 		if (target.getType() == HitResult.Type.BLOCK)
 		{
 			Player player = event.getEntity();
-			Level world = player.level;
+			Level world = player.level();
 			if (world.isClientSide)
 				return;
 			BlockHitResult blockray = (BlockHitResult) target;

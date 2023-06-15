@@ -15,7 +15,7 @@ import com.lupicus.cc.tileentity.ModTileEntities;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.minecraftforge.event.CreativeModeTabEvent;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -65,7 +65,7 @@ public class Main
 	    }
 
 	    @SubscribeEvent
-	    public static void onCreativeTab(CreativeModeTabEvent.BuildContents event)
+	    public static void onCreativeTab(BuildCreativeModeTabContentsEvent event)
 	    {
 	    	ModItems.setupTabs(event);
 	    }

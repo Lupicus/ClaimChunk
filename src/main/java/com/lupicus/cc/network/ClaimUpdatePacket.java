@@ -75,7 +75,7 @@ public class ClaimUpdatePacket
 	{
 		ctx.get().enqueueWork(() -> {
 			ServerPlayer player = ctx.get().getSender();
-			Level world = player.level;
+			Level world = player.level();
 			BlockEntity te = null;
 			if (world.hasChunkAt(message.pos))
 				te = world.getBlockEntity(message.pos);

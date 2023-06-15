@@ -54,7 +54,7 @@ public class BlockEvents
 	public static void onBreakBlock(BreakEvent event)
 	{
 		Player player = event.getPlayer();
-		Level world = player.level;
+		Level world = player.level();
 		if (world.isClientSide)
 			return;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
@@ -154,7 +154,7 @@ public class BlockEvents
 		if (!(entity instanceof Player))
 			return;
 		Player player = (Player) entity;
-		Level world = player.level;
+		Level world = player.level();
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
 			return;
@@ -186,7 +186,7 @@ public class BlockEvents
 		if (!(entity instanceof Player))
 			return;
 		Player player = (Player) entity;
-		Level world = player.level;
+		Level world = player.level();
 		boolean flag = false;
 		ChunkPos prev = null;
 		ClaimInfo info = null;

@@ -32,12 +32,12 @@ function initializeCoreMod() {
 
 // add conditional return
 function patch_m_5706_(obj) {
-	var fn = 'canHit'
-	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, "net/minecraft/world/entity/player/Player", fn, "(Lnet/minecraft/world/entity/Entity;D)Z")
+	var fn = asmapi.mapMethod('m_20280_') // distanceToSqr
+	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, "net/minecraft/world/entity/player/Player", fn, "(Lnet/minecraft/world/entity/Entity;)D")
 	if (node) {
-		var node2 = node.getPrevious().getPrevious()
-		node = node.getNext()
-		if (node2.getOpcode() == opc.ALOAD && node.getOpcode() == opc.IFEQ) {
+		var node2 = node.getPrevious()
+		node = node.getNext().getNext().getNext()
+		if (node2.getOpcode() == opc.ALOAD && node.getOpcode() == opc.IFGE) {
 			var lb = node.label
 			var op1 = new VarInsnNode(opc.ALOAD, 0)
 			var op2 = new VarInsnNode(opc.ALOAD, node2.var)
