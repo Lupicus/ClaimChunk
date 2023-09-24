@@ -1,7 +1,5 @@
 package com.lupicus.cc.network;
 
-import java.util.function.Supplier;
-
 import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
 
@@ -10,7 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent.Context;
 
 public class ClaimUpdatePacket
 {
@@ -71,10 +69,10 @@ public class ClaimUpdatePacket
 	}
 
 	@SuppressWarnings("deprecation")
-	public static void processPacket(ClaimUpdatePacket message, Supplier<NetworkEvent.Context> ctx)
+	public static void processPacket(ClaimUpdatePacket message, Context ctx)
 	{
-		ctx.get().enqueueWork(() -> {
-			ServerPlayer player = ctx.get().getSender();
+		ctx.enqueueWork(() -> {
+			ServerPlayer player = ctx.getSender();
 			Level world = player.level();
 			BlockEntity te = null;
 			if (world.hasChunkAt(message.pos))
@@ -107,6 +105,6 @@ public class ClaimUpdatePacket
 				}
 			}
 		});
-		ctx.get().setPacketHandled(true);
+		ctx.setPacketHandled(true);
 	}
 }

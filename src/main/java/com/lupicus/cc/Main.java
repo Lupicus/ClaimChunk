@@ -8,9 +8,6 @@ import com.lupicus.cc.config.MyConfig;
 import com.lupicus.cc.item.ModItems;
 import com.lupicus.cc.manager.ClaimManager;
 import com.lupicus.cc.network.Register;
-import com.lupicus.cc.proxy.ClientProxy;
-import com.lupicus.cc.proxy.ServerProxy;
-import com.lupicus.cc.proxy.IProxy;
 import com.lupicus.cc.tileentity.ModTileEntities;
 
 import net.minecraft.core.Registry;
@@ -20,7 +17,6 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
@@ -34,7 +30,6 @@ import net.minecraftforge.registries.RegisterEvent;
 public class Main
 {
 	public static final String MODID = "cc";
-	public static IProxy proxy = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
 
 	public Main()
 	{

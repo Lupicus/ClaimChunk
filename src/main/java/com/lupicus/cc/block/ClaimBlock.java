@@ -54,7 +54,6 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.util.FakePlayer;
 
 public class ClaimBlock extends Block implements EntityBlock
 {
@@ -152,8 +151,8 @@ public class ClaimBlock extends Block implements EntityBlock
 			return null; // let server decide
 
 		Player player = context.getPlayer();
-		if (player instanceof FakePlayer)
-			return null;
+		if (player == null || world.getServer().getPlayerList().getPlayer(player.getUUID()) == null)
+			return null; // FakePlayer
 		BlockPos pos = context.getClickedPos();
 		ClaimInfo cinfo = ClaimManager.get(world, pos);
 		if (!cinfo.okPerm(player))

@@ -73,12 +73,6 @@ public class ClaimScreen extends Screen
 		modify.setValue(s1);
 	}
 
-	@Override
-	public void tick() {
-		access.tick();
-		modify.tick();
-	}
-
 	private void doneCB() {
 		sendData();
 		minecraft.setScreen((Screen) null);
@@ -139,14 +133,12 @@ public class ClaimScreen extends Screen
 
 	@Override
 	public void render(GuiGraphics gg, int mouseX, int mouseY, float partialTicks) {
-		renderBackground(gg);
+		super.render(gg, mouseX, mouseY, partialTicks);
 		gg.drawString(font, I18n.get("cc.gui.access"),
 				width / 2 - 153, 10, 10526880);
 		access.render(gg, mouseX, mouseY, partialTicks);
 		gg.drawString(font, I18n.get("cc.gui.modify"),
 				width / 2 - 153, 50, 10526880);
 		modify.render(gg, mouseX, mouseY, partialTicks);
-
-		super.render(gg, mouseX, mouseY, partialTicks);
 	}
 }

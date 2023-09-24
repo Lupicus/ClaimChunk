@@ -1,14 +1,10 @@
 package com.lupicus.cc.network;
 
-import java.util.function.Supplier;
-
-import com.lupicus.cc.Main;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent.Context;
 
 public class ChangeBlockPacket
 {
@@ -39,11 +35,11 @@ public class ChangeBlockPacket
 		msg.encode(buf);
 	}
 
-	public static void processPacket(ChangeBlockPacket message, Supplier<NetworkEvent.Context> ctx)
+	public static void processPacket(ChangeBlockPacket message, Context ctx)
 	{
-		ctx.get().enqueueWork(() -> {
-			Main.proxy.changeBlock(message.pos, message.state);
+		ctx.enqueueWork(() -> {
+			ClientHandler.changeBlock(message.pos, message.state);
 		});
-		ctx.get().setPacketHandled(true);
+		ctx.setPacketHandled(true);
 	}
 }

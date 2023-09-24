@@ -350,7 +350,7 @@ public class PlayerEvents
 					if (block instanceof LiquidBlockContainer)
 					{
 						LiquidBlockContainer lc = (LiquidBlockContainer) block;
-						if (lc.canPlaceLiquid(world, blockpos, state, fluid))
+						if (lc.canPlaceLiquid(player, world, blockpos, state, fluid))
 							next = false;
 					}
 				}

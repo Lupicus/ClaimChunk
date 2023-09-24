@@ -1,12 +1,8 @@
 package com.lupicus.cc.network;
 
-import java.util.function.Supplier;
-
-import com.lupicus.cc.Main;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent.Context;
 
 public class ClaimScreenPacket
 {
@@ -38,11 +34,11 @@ public class ClaimScreenPacket
 		msg.encode(buf);
 	}
 
-	public static void processPacket(ClaimScreenPacket message, Supplier<NetworkEvent.Context> ctx)
+	public static void processPacket(ClaimScreenPacket message, Context ctx)
 	{
-		ctx.get().enqueueWork(() -> {
-			Main.proxy.showClaimGui(message.pos);
+		ctx.enqueueWork(() -> {
+			ClientHandler.showClaimGui(message.pos);
 		});
-		ctx.get().setPacketHandled(true);
+		ctx.setPacketHandled(true);
 	}
 }
