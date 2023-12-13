@@ -26,6 +26,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -33,6 +34,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.level.BlockEvent.BreakEvent;
 import net.minecraftforge.event.level.BlockEvent.EntityMultiPlaceEvent;
@@ -301,6 +303,46 @@ public class BlockEvents
 			}
 		}
 		return false;
+	}
+
+	public static boolean canBreakPot(Level world, BlockHitResult hitResult, Projectile pEntity)
+	{
+		Entity entity = pEntity.getOwner();
+		Player player = null;
+		if (entity instanceof Mob)
+		{
+			if (MyConfig.mobDestroy)
+			{
+				Mob mob = (Mob) entity;
+				LivingEntity target = mob.getTarget();
+				if (!(target instanceof Player))
+					return true;
+				player = (Player) target;
+			}
+		}
+		else
+		{
+			if (entity instanceof Player)
+				player = (Player) entity;
+		}
+		boolean flag;
+		ClaimInfo info = ClaimManager.get(world, hitResult.getBlockPos());
+		if (player != null)
+		{
+			flag = info.okPerm(player) || (player.hasPermissions(3) && player.isCreative());
+			if (!flag)
+			{
+				BlockEntity te = world.getBlockEntity(info.pos.pos());
+				if (te instanceof ClaimTileEntity)
+				{
+					ClaimTileEntity cte = (ClaimTileEntity) te;
+					flag = cte.grantModify(player);
+				}
+			}
+		}
+		else
+			flag = (info.owner == null);
+		return flag;
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)

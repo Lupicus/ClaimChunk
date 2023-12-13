@@ -226,7 +226,7 @@ public class MyConfig
 					.define("AddOwner", true);
 
 			mobDestroy = builder
-					.comment("Mob explosions can destroy blocks based on mob target")
+					.comment("Mob can destroy blocks based on mob target")
 					.translation(section_trans + "mob_destroy")
 					.define("MobDestroy", true);
 

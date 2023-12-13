@@ -13,6 +13,7 @@ import com.lupicus.cc.manager.ClaimManager.ClaimInfo;
 import com.lupicus.cc.network.ClaimScreenPacket;
 import com.lupicus.cc.network.Network;
 import com.lupicus.cc.tileentity.ClaimTileEntity;
+import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -57,6 +58,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class ClaimBlock extends Block implements EntityBlock
 {
+	public static final MapCodec<ClaimBlock> CODEC = simpleCodec(ClaimBlock::new);
 	public static final BooleanProperty ENABLED = BlockStateProperties.ENABLED;
 	private static final String DATA_TAG = "ClaimData";
 	private static final String ACCESS_LIST = "AccessList";
@@ -68,6 +70,11 @@ public class ClaimBlock extends Block implements EntityBlock
 			Block.box(6, 3, 6, 10, 8, 10),
 			Block.box(3, 8, 3, 13, 12, 13)
 			).reduce((v1, v2) -> Shapes.join(v1, v2, BooleanOp.OR)).get();
+
+	@Override
+	public MapCodec<ClaimBlock> codec() {
+		return CODEC;
+	}
 
 	public ClaimBlock(BlockBehaviour.Properties properties) {
 		super(properties);
