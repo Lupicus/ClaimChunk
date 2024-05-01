@@ -1,5 +1,6 @@
 package com.lupicus.cc.block;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -16,22 +17,23 @@ import com.lupicus.cc.tileentity.ClaimTileEntity;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
@@ -87,10 +89,10 @@ public class ClaimBlock extends Block implements EntityBlock
 	}
 
 	@Override
-	public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player,
-			InteractionHand handIn, BlockHitResult hit)
+	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level worldIn,
+			BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit)
 	{
-		if (!worldIn.isClientSide)
+		if (!worldIn.isClientSide && handIn == InteractionHand.MAIN_HAND)
 		{
 			BlockEntity te = worldIn.getBlockEntity(pos);
 			if (te instanceof ClaimTileEntity)
@@ -101,42 +103,62 @@ public class ClaimBlock extends Block implements EntityBlock
 				else if (!player.getUUID().equals(cte.owner))
 				{
 					player.displayClientMessage(Component.translatable("cc.message.block.not_owner"), true);
-					return InteractionResult.FAIL;
+					return ItemInteractionResult.FAIL;
 				}
-				ItemStack stack = player.getItemInHand(handIn);
-				Item item = stack.getItem();
-				if (item == Items.PAPER)
+				if (stack.getItem() == Items.PAPER)
 				{
-					CompoundTag tag = stack.getTagElement(DATA_TAG);
-					if (tag != null)
+					CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+					if (data != null && data.contains(DATA_TAG))
 					{
+						@SuppressWarnings("deprecation")
+						CompoundTag tag = data.getUnsafe().getCompound(DATA_TAG);
 						cte.setAccess(tag.getString(ACCESS_LIST));
 						cte.setModify(tag.getString(MODIFY_LIST));
 						cte.setChanged();
+						return ItemInteractionResult.SUCCESS;
 					}
-					else if (!stack.hasTag())
+					else if (stack.getComponentsPatch().isEmpty())
 					{
 						ItemStack newstack = (stack.getCount() > 1) ? stack.split(1) : stack;
-						tag = newstack.getOrCreateTagElement(DATA_TAG);
-						tag.putString(ACCESS_LIST, cte.getAccess());
-						tag.putString(MODIFY_LIST, cte.getModify());
+						CustomData.update(DataComponents.CUSTOM_DATA, newstack,
+								t -> {
+									CompoundTag tag = new CompoundTag();
+									t.put(DATA_TAG, tag);
+									tag.putString(ACCESS_LIST, cte.getAccess());
+									tag.putString(MODIFY_LIST, cte.getModify());
+									});
 						setLore(newstack);
 						if (stack != newstack && !player.addItem(newstack))
 							player.drop(newstack, false);
+						return ItemInteractionResult.SUCCESS;
 					}
 				}
-				else if (player instanceof ServerPlayer) {
-					ServerPlayer splayer = (ServerPlayer) player;
-					ClientboundBlockEntityDataPacket supdatetileentitypacket = cte.getUpdatePacket();
-					if (supdatetileentitypacket != null) {
-						splayer.connection.send(supdatetileentitypacket);
-					}
-					Network.sendToClient(new ClaimScreenPacket(pos), splayer);
+				else
+					return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+			}
+		}
+		return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+	}
+
+	@Override
+	protected InteractionResult useWithoutItem(BlockState state, Level worldIn, BlockPos pos, Player player,
+			BlockHitResult hit)
+	{
+		if (player instanceof ServerPlayer)
+		{
+			ServerPlayer splayer = (ServerPlayer) player;
+			BlockEntity te = worldIn.getBlockEntity(pos);
+			if (te instanceof ClaimTileEntity)
+			{
+				ClientboundBlockEntityDataPacket supdatetileentitypacket = ((ClaimTileEntity) te).getUpdatePacket();
+				if (supdatetileentitypacket != null) {
+					splayer.connection.send(supdatetileentitypacket);
 				}
+				Network.sendToClient(new ClaimScreenPacket(pos), splayer);
 				return InteractionResult.SUCCESS;
 			}
 		}
-		return InteractionResult.CONSUME;
+		return InteractionResult.PASS;
 	}
 
 //	@Override
@@ -174,7 +196,7 @@ public class ClaimBlock extends Block implements EntityBlock
 			if (world.dimension() == Level.OVERWORLD)
 			{
 				LevelData winfo = world.getLevelData();
-				ChunkPos scpos = new ChunkPos(new BlockPos(winfo.getXSpawn(), 0, winfo.getZSpawn()));
+				ChunkPos scpos = new ChunkPos(winfo.getSpawnPos());
 				ChunkPos cpos = new ChunkPos(pos);
 				if (scpos.getChessboardDistance(cpos) <= MyConfig.chunksFromSpawn)
 				{
@@ -244,9 +266,11 @@ public class ClaimBlock extends Block implements EntityBlock
 			ClaimInfo cinfo = ClaimManager.get(worldIn, pos);
 
 			cte.owner = player.getUUID();
-			CompoundTag tag = stack.getTag();
-			if (tag != null)
+			CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+			if (data != null && !data.isEmpty())
 			{
+				@SuppressWarnings("deprecation")
+				CompoundTag tag = data.getUnsafe();
 				cte.setAccess(tag.getString(ACCESS_LIST));
 				cte.setModify(tag.getString(MODIFY_LIST));
 			}
@@ -295,7 +319,6 @@ public class ClaimBlock extends Block implements EntityBlock
 		return flag;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder)
 	{
@@ -310,9 +333,11 @@ public class ClaimBlock extends Block implements EntityBlock
 				{
 					if (e.getItem() == ModItems.CLAIM_BLOCK)
 					{
-						CompoundTag tag = e.getOrCreateTag();
-						tag.putString(ACCESS_LIST, cte.getAccess());
-						tag.putString(MODIFY_LIST, cte.getModify());
+						CustomData.update(DataComponents.CUSTOM_DATA, e,
+								t -> {
+									t.putString(ACCESS_LIST, cte.getAccess());
+									t.putString(MODIFY_LIST, cte.getModify());
+									});
 					}
 				}
 			}
@@ -355,11 +380,15 @@ public class ClaimBlock extends Block implements EntityBlock
 
 	public static void clearPaper(ItemStack stack, Player player)
 	{
-		CompoundTag tag = stack.getTagElement(DATA_TAG);
-		if (tag != null)
+		CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+		if (data != null && data.contains(DATA_TAG))
 		{
 			ItemStack newstack = (stack.getCount() > 1) ? stack.split(1) : stack;
-			newstack.setTag(null);
+			CustomData.update(DataComponents.CUSTOM_DATA, newstack,
+					t -> {
+						t.remove(DATA_TAG);
+						});
+			newstack.set(DataComponents.LORE, ItemLore.EMPTY);
 			if (stack != newstack && !player.addItem(newstack))
 				player.drop(newstack, false);
 		}
@@ -367,10 +396,9 @@ public class ClaimBlock extends Block implements EntityBlock
 
 	private static void setLore(ItemStack stack)
 	{
-		CompoundTag tag = stack.getOrCreateTagElement("display");
-		ListTag list = new ListTag();
-		list.add(StringTag.valueOf(Component.Serializer.toJson(Component.translatable("cc.lore.paper"))));
-		tag.put("Lore", list);
+		List<Component> list = new ArrayList<>();
+		list.add(Component.translatable("cc.lore.paper"));
+		stack.set(DataComponents.LORE, new ItemLore(list));
 	}
 
 	public static MutableComponent makeMsg(String trans, ClaimInfo info)

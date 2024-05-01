@@ -15,11 +15,11 @@ function initializeCoreMod() {
     		},
     		'transformer': function(classNode) {
     			var count = 0
-    			var fn = asmapi.mapMethod('m_60686_') // attack
+    			var fn = "attack"
     			for (var i = 0; i < classNode.methods.size(); ++i) {
     				var obj = classNode.methods.get(i)
     				if (obj.name == fn) {
-    					patch_m_60686_(obj)
+    					patch_attack(obj)
     					count++
     				}
     			}
@@ -32,7 +32,7 @@ function initializeCoreMod() {
 }
 
 // add conditional return
-function patch_m_60686_(obj) {
+function patch_attack(obj) {
 	var lb = null
 	var flag = false
 	var node = obj.instructions.getLast()

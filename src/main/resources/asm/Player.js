@@ -2,7 +2,6 @@ var asmapi = Java.type('net.minecraftforge.coremod.api.ASMAPI')
 var opc = Java.type('org.objectweb.asm.Opcodes')
 var AbstractInsnNode = Java.type('org.objectweb.asm.tree.AbstractInsnNode')
 var JumpInsnNode = Java.type('org.objectweb.asm.tree.JumpInsnNode')
-var LabelNode = Java.type('org.objectweb.asm.tree.LabelNode')
 var VarInsnNode = Java.type('org.objectweb.asm.tree.VarInsnNode')
 
 function initializeCoreMod() {
@@ -14,11 +13,11 @@ function initializeCoreMod() {
     		},
     		'transformer': function(classNode) {
     			var count = 0
-    			var fn = asmapi.mapMethod('m_5706_') // attack
+    			var fn = "attack"
     			for (var i = 0; i < classNode.methods.size(); ++i) {
     				var obj = classNode.methods.get(i)
     				if (obj.name == fn) {
-    					patch_m_5706_(obj)
+    					patch_attack(obj)
     					count++
     				}
     			}
@@ -31,11 +30,13 @@ function initializeCoreMod() {
 }
 
 // add conditional return
-function patch_m_5706_(obj) {
-	var fn = asmapi.mapMethod('m_20280_') // distanceToSqr
+function patch_attack(obj) {
+	var fn = "distanceToSqr"
 	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, "net/minecraft/world/entity/player/Player", fn, "(Lnet/minecraft/world/entity/Entity;)D")
 	if (node) {
 		var node2 = node.getPrevious()
+		while (node2.getOpcode() == -1) // skip misplaced junk
+			node2 = node2.getPrevious()
 		node = node.getNext().getNext().getNext()
 		if (node2.getOpcode() == opc.ALOAD && node.getOpcode() == opc.IFGE) {
 			var lb = node.label

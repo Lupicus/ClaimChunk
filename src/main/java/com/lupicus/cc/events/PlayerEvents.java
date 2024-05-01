@@ -196,7 +196,7 @@ public class PlayerEvents
 		return true;
 	}
 
-	/** for armor stand */
+	/** for armor stand, item frame, painting, minecart, etc */
 	public static boolean cancelEntityHurt(Entity entity, DamageSource source)
 	{
 		Level world = entity.level();

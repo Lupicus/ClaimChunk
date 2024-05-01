@@ -10,6 +10,7 @@ import com.lupicus.cc.block.ClaimBlock;
 import com.lupicus.cc.manager.ClaimManager;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -33,8 +34,8 @@ public class ClaimTileEntity extends BlockEntity
 	}
 
 	@Override
-	public void load(CompoundTag nbt) {
-		super.load(nbt);
+	public void loadAdditional(CompoundTag nbt, Provider hp) {
+		super.loadAdditional(nbt, hp);
 		if (nbt.hasUUID("Owner"))
 			owner = nbt.getUUID("Owner");
 		setAccess(nbt.getString("AccessList"));
@@ -43,8 +44,8 @@ public class ClaimTileEntity extends BlockEntity
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag compound) {
-		super.saveAdditional(compound);
+	protected void saveAdditional(CompoundTag compound, Provider hp) {
+		super.saveAdditional(compound, hp);
 		if (owner != null)
 			compound.putUUID("Owner", owner);
 		compound.putString("AccessList", accessList);
@@ -125,14 +126,14 @@ public class ClaimTileEntity extends BlockEntity
 	}
 
 	@Override
-	public CompoundTag getUpdateTag() {
-		return saveWithoutMetadata();
+	public CompoundTag getUpdateTag(Provider hp) {
+		return saveWithoutMetadata(hp);
 	}
 
 	@Override
-	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, Provider hp) {
 		if (level == null)
 			return;
-		load(pkt.getTag());
+		super.onDataPacket(net, pkt, hp);
 	}
 }

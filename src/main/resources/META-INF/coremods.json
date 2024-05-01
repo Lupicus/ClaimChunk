@@ -3,5 +3,8 @@
 	"ArmorStand": "asm/ArmorStand.js",
 	"DecoratedPot": "asm/DecoratedPot.js",
 	"FlowingFluid": "asm/FlowingFluid.js",
-	"Player": "asm/Player.js"
+	"HangingEntity": "asm/HangingEntity.js",
+	"ItemFrame": "asm/ItemFrame.js",
+	"Player": "asm/Player.js",
+	"VehicleEntity": "asm/VehicleEntity.js"
 }

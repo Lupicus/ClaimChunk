@@ -14,6 +14,7 @@
     }
   },
   "result": {
-    "item": "cc:claim_block"
+    "count": 1,
+    "id": "cc:claim_block"
   }
 }
