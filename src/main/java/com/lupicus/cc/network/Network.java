@@ -18,7 +18,7 @@ import net.minecraftforge.network.SimpleChannel;
 
 public class Network
 {
-	public static final SimpleChannel INSTANCE = ChannelBuilder.named(new ResourceLocation(Main.MODID, "main"))
+	public static final SimpleChannel INSTANCE = ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath(Main.MODID, "main"))
 			.networkProtocolVersion(1)
 			.simpleChannel();
 	private static int id = 0;

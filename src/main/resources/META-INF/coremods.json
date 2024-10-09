@@ -1,9 +1,9 @@
 {
 	"AbsState": "asm/AbsState.js",
 	"ArmorStand": "asm/ArmorStand.js",
+	"AttachedEntity": "asm/AttachedEntity.js",
 	"DecoratedPot": "asm/DecoratedPot.js",
 	"FlowingFluid": "asm/FlowingFluid.js",
-	"HangingEntity": "asm/HangingEntity.js",
 	"ItemFrame": "asm/ItemFrame.js",
 	"Player": "asm/Player.js",
 	"VehicleEntity": "asm/VehicleEntity.js"

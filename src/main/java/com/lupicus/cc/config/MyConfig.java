@@ -113,7 +113,7 @@ public class MyConfig
 				continue;
 			}
 			try {
-				ResourceLocation res = new ResourceLocation(name);
+				ResourceLocation res = ResourceLocation.parse(name);
 				if (reg.containsKey(res))
 					ret.add(reg.getValue(res));
 				else
@@ -134,7 +134,7 @@ public class MyConfig
 		for (String name : emptyFilter(list))
 		{
 			try {
-				ResourceLocation res = new ResourceLocation(name);
+				ResourceLocation res = ResourceLocation.parse(name);
 				if (reg.containsKey(res))
 					ret.add(reg.getValue(res));
 				else
@@ -214,7 +214,7 @@ public class MyConfig
 
 		public Common(ForgeConfigSpec.Builder builder)
 		{
-			List<String> bbDefList = Arrays.asList("minecraft:ender_chest");
+			List<String> bbDefList = Arrays.asList("minecraft:ender_chest", "minecraft:vault");
 			List<String> beDefList = Arrays.asList("");
 			List<String> idDefList = Arrays.asList("*");
 			List<String> edDefList = Arrays.asList("");

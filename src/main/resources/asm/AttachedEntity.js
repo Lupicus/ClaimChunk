@@ -5,10 +5,10 @@ var VarInsnNode = Java.type('org.objectweb.asm.tree.VarInsnNode')
 
 function initializeCoreMod() {
     return {
-    	'HangingEntity': {
+    	'AttachedEntity': {
     		'target': {
     			'type': 'CLASS',
-    			'name': 'net.minecraft.world.entity.decoration.HangingEntity'
+    			'name': 'net.minecraft.world.entity.decoration.BlockAttachedEntity'
     		},
     		'transformer': function(classNode) {
     			var count = 0
@@ -21,7 +21,7 @@ function initializeCoreMod() {
     				}
     			}
     			if (count < 1)
-    				asmapi.log("ERROR", "Failed to modify HangingEntity: Method not found")
+    				asmapi.log("ERROR", "Failed to modify BlockAttachedEntity: Method not found")
     			return classNode;
     		}
     	}
@@ -48,8 +48,8 @@ function patch_hurt(obj) {
 			obj.instructions.insert(node, list)
 		}
 		else
-			asmapi.log("ERROR", "Failed to modify HangingEntity: code is different")
+			asmapi.log("ERROR", "Failed to modify BlockAttachedEntity: code is different")
 	}
 	else
-		asmapi.log("ERROR", "Failed to modify HangingEntity: GETFIELD not found")
+		asmapi.log("ERROR", "Failed to modify BlockAttachedEntity: GETFIELD not found")
 }

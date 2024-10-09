@@ -341,7 +341,7 @@ public class ClaimManager
 			StringBuffer buf = new StringBuffer(len);
 			for (int j = 0; j < len; ++j)
 				buf.append(fd.readChar());
-			dimList[i] = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(buf.toString()));
+			dimList[i] = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(buf.toString()));
 		}
 
 		// read positions
