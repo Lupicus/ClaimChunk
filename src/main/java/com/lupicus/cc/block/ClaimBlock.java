@@ -22,10 +22,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -89,7 +89,7 @@ public class ClaimBlock extends Block implements EntityBlock
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level worldIn,
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level worldIn,
 			BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit)
 	{
 		if (!worldIn.isClientSide && handIn == InteractionHand.MAIN_HAND)
@@ -103,7 +103,7 @@ public class ClaimBlock extends Block implements EntityBlock
 				else if (!player.getUUID().equals(cte.owner))
 				{
 					player.displayClientMessage(Component.translatable("cc.message.block.not_owner"), true);
-					return ItemInteractionResult.FAIL;
+					return InteractionResult.FAIL;
 				}
 				if (stack.getItem() == Items.PAPER)
 				{
@@ -115,7 +115,7 @@ public class ClaimBlock extends Block implements EntityBlock
 						cte.setAccess(tag.getString(ACCESS_LIST));
 						cte.setModify(tag.getString(MODIFY_LIST));
 						cte.setChanged();
-						return ItemInteractionResult.SUCCESS;
+						return InteractionResult.SUCCESS;
 					}
 					else if (stack.getComponentsPatch().isEmpty())
 					{
@@ -130,14 +130,14 @@ public class ClaimBlock extends Block implements EntityBlock
 						setLore(newstack);
 						if (stack != newstack && !player.addItem(newstack))
 							player.drop(newstack, false);
-						return ItemInteractionResult.SUCCESS;
+						return InteractionResult.SUCCESS;
 					}
 				}
 				else
-					return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+					return InteractionResult.TRY_WITH_EMPTY_HAND;
 			}
 		}
-		return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
@@ -240,7 +240,7 @@ public class ClaimBlock extends Block implements EntityBlock
 	}
 
 	@Override
-	public void wasExploded(Level worldIn, BlockPos pos, Explosion explosionIn) {
+	public void wasExploded(ServerLevel worldIn, BlockPos pos, Explosion explosionIn) {
 		ClaimInfo cinfo = ClaimManager.get(worldIn, pos);
 		if (cinfo.owner != null && pos.equals(cinfo.pos.pos()))
 			ClaimManager.remove(worldIn, pos);

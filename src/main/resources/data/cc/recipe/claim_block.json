@@ -6,12 +6,8 @@
     "DDD"
   ],
   "key": {
-    "S": {
-      "tag": "minecraft:signs"
-    },
-    "D": {
-      "item": "minecraft:redstone"
-    }
+    "S": "#minecraft:signs",
+    "D": "minecraft:redstone"
   },
   "result": {
     "count": 1,

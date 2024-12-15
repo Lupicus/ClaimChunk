@@ -1,6 +1,5 @@
 var asmapi = Java.type('net.minecraftforge.coremod.api.ASMAPI')
 var opc = Java.type('org.objectweb.asm.Opcodes')
-var AbstractInsnNode = Java.type('org.objectweb.asm.tree.AbstractInsnNode')
 var JumpInsnNode = Java.type('org.objectweb.asm.tree.JumpInsnNode')
 var VarInsnNode = Java.type('org.objectweb.asm.tree.VarInsnNode')
 
@@ -13,7 +12,7 @@ function initializeCoreMod() {
     		},
     		'transformer': function(classNode) {
     			var count = 0
-    			var fn = "canSpreadTo"
+    			var fn = "getSpread"
     			for (var i = 0; i < classNode.methods.size(); ++i) {
     				var obj = classNode.methods.get(i)
     				if (obj.name == fn) {
@@ -29,26 +28,26 @@ function initializeCoreMod() {
     }
 }
 
-// add conditional return
+// add canSpreadTo call
 function patch_spread(obj) {
-	var fn = "canHoldFluid"
-	var owner = "net/minecraft/world/level/material/FlowingFluid"
-	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, owner, fn, "(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/Fluid;)Z")
+	var fn = "canBeReplacedWith"
+	var owner = "net/minecraft/world/level/material/FluidState"
+	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, owner, fn, "(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;Lnet/minecraft/core/Direction;)Z")
 	if (node) {
 		node = node.getNext()
 		if (node.getOpcode() == opc.IFEQ) {
 			var lb = node.label
 			var op1 = new VarInsnNode(opc.ALOAD, 1)
 			var op2 = new VarInsnNode(opc.ALOAD, 2)
-			var op3 = new VarInsnNode(opc.ALOAD, 5)
-			var op4 = new VarInsnNode(opc.ALOAD, 4)
+			var op3 = new VarInsnNode(opc.ALOAD, 9)
+			var op4 = new VarInsnNode(opc.ALOAD, 8)
 			var op5 = asmapi.buildMethodCall("com/lupicus/cc/events/BlockEvents", "canSpreadTo", "(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z", asmapi.MethodType.STATIC)
 			var op6 = new JumpInsnNode(opc.IFEQ, lb)
 			var list = asmapi.listOf(op1, op2, op3, op4, op5, op6)
 			obj.instructions.insert(node, list)
 		}
 		else
-			asmapi.log("ERROR", "Failed to modify FlowingFluid: call is different")
+			asmapi.log("ERROR", "Failed to modify FlowingFluid: code is different")
 	}
 	else
 		asmapi.log("ERROR", "Failed to modify FlowingFluid: call not found")

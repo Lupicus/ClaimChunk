@@ -1,6 +1,5 @@
 var asmapi = Java.type('net.minecraftforge.coremod.api.ASMAPI')
 var opc = Java.type('org.objectweb.asm.Opcodes')
-var AbstractInsnNode = Java.type('org.objectweb.asm.tree.AbstractInsnNode')
 var JumpInsnNode = Java.type('org.objectweb.asm.tree.JumpInsnNode')
 var VarInsnNode = Java.type('org.objectweb.asm.tree.VarInsnNode')
 
@@ -29,10 +28,10 @@ function initializeCoreMod() {
     }
 }
 
-// add canBreakPot test
+// add canBreakPot call
 function patch_hit(obj) {
-	var fn = asmapi.mapMethod('m_305640_') // mayBreak
-	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, "net/minecraft/world/entity/projectile/Projectile", fn, "(Lnet/minecraft/world/level/Level;)Z")
+	var fn = "mayBreak"
+	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, "net/minecraft/world/entity/projectile/Projectile", fn, "(Lnet/minecraft/server/level/ServerLevel;)Z")
 	if (node) {
 		node = node.getNext()
 		if (node.getOpcode() == opc.IFEQ) {
@@ -46,7 +45,7 @@ function patch_hit(obj) {
 			obj.instructions.insert(node, list)
 		}
 		else
-			asmapi.log("ERROR", "Failed to modify DecoratedPotBlock: call is different")
+			asmapi.log("ERROR", "Failed to modify DecoratedPotBlock: code is different")
 	}
 	else
 		asmapi.log("ERROR", "Failed to modify DecoratedPotBlock: call not found")

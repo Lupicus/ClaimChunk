@@ -31,7 +31,7 @@ function initializeCoreMod() {
     }
 }
 
-// add conditional return
+// add cancelBlockClick call
 function patch_attack(obj) {
 	var lb = null
 	var flag = false

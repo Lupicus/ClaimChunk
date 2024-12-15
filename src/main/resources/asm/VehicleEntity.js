@@ -14,7 +14,7 @@ function initializeCoreMod() {
     		},
     		'transformer': function(classNode) {
     			var count = 0
-    			var fn = "hurt"
+    			var fn = "hurtServer"
     			for (var i = 0; i < classNode.methods.size(); ++i) {
     				var obj = classNode.methods.get(i)
     				if (obj.name == fn) {
@@ -30,7 +30,7 @@ function initializeCoreMod() {
     }
 }
 
-// add conditional return
+// add cancelEntityHurt call
 function patch_hurt(obj) {
 	var fn = "getHurtDir"
 	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, "net/minecraft/world/entity/vehicle/VehicleEntity", fn, "()I")
@@ -39,7 +39,7 @@ function patch_hurt(obj) {
 		if (node.getOpcode() == opc.ALOAD) {
 			var lb = new LabelNode()
 			var op1 = new VarInsnNode(opc.ALOAD, 0)
-			var op2 = new VarInsnNode(opc.ALOAD, 1)
+			var op2 = new VarInsnNode(opc.ALOAD, 2)
 			var op3 = asmapi.buildMethodCall("com/lupicus/cc/events/PlayerEvents", "cancelEntityHurt", "(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)Z", asmapi.MethodType.STATIC)
 			var op4 = new JumpInsnNode(opc.IFEQ, lb)
 			var op5 = new InsnNode(opc.ICONST_1)
@@ -48,7 +48,7 @@ function patch_hurt(obj) {
 			obj.instructions.insertBefore(node, list)
 		}
 		else
-			asmapi.log("ERROR", "Failed to modify VehicleEntity: call is different")
+			asmapi.log("ERROR", "Failed to modify VehicleEntity: code is different")
 	}
 	else
 		asmapi.log("ERROR", "Failed to modify VehicleEntity: call not found")

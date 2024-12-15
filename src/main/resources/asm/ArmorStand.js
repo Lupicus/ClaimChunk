@@ -12,7 +12,7 @@ function initializeCoreMod() {
     		},
     		'transformer': function(classNode) {
     			var count = 0
-    			var fn = "hurt"
+    			var fn = "hurtServer"
     			for (var i = 0; i < classNode.methods.size(); ++i) {
     				var obj = classNode.methods.get(i)
     				if (obj.name == fn) {
@@ -28,7 +28,7 @@ function initializeCoreMod() {
     }
 }
 
-// add conditional return
+// add cancelEntityHurt call
 function patch_hurt(obj) {
 	var fn = "isMarker"
 	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, "net/minecraft/world/entity/decoration/ArmorStand", fn, "()Z")
@@ -38,13 +38,13 @@ function patch_hurt(obj) {
 		if (node.getOpcode() == opc.IFEQ && node2.getOpcode() == opc.IFNE) {
 			var op1 = new JumpInsnNode(opc.IFNE, node2.label)
 			var op2 = new VarInsnNode(opc.ALOAD, 0)
-			var op3 = new VarInsnNode(opc.ALOAD, 1)
+			var op3 = new VarInsnNode(opc.ALOAD, 2)
 			var op4 = asmapi.buildMethodCall("com/lupicus/cc/events/PlayerEvents", "cancelEntityHurt", "(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)Z", asmapi.MethodType.STATIC)
 			var list = asmapi.listOf(op1, op2, op3, op4)
 			obj.instructions.insertBefore(node, list)
 		}
 		else
-			asmapi.log("ERROR", "Failed to modify ArmorStand: call is different")
+			asmapi.log("ERROR", "Failed to modify ArmorStand: code is different")
 	}
 	else
 		asmapi.log("ERROR", "Failed to modify ArmorStand: call not found")

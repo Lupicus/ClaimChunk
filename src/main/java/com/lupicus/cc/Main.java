@@ -17,7 +17,6 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig;
@@ -31,39 +30,39 @@ public class Main
 {
 	public static final String MODID = "cc";
 
-	public Main()
+	public Main(FMLJavaModLoadingContext context)
 	{
-		FMLJavaModLoadingContext.get().getModEventBus().register(this);
-		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, MyConfig.COMMON_SPEC);
+		context.getModEventBus().register(this);
+		context.registerConfig(ModConfig.Type.COMMON, MyConfig.COMMON_SPEC);
 	}
 
 	@SubscribeEvent
 	public void setup(final FMLCommonSetupEvent event)
 	{
-        Register.initPackets();
+		Register.initPackets();
 	}
 
 	@Mod.EventBusSubscriber(bus = Bus.MOD)
 	public static class ModEvents
 	{
-	    @SubscribeEvent
-	    public static void onRegister(final RegisterEvent event)
-	    {
-	    	@NotNull
+		@SubscribeEvent
+		public static void onRegister(final RegisterEvent event)
+		{
+			@NotNull
 			ResourceKey<? extends Registry<?>> key = event.getRegistryKey();
-	    	if (key.equals(ForgeRegistries.Keys.BLOCKS))
-	    		ModBlocks.register(event.getForgeRegistry());
-	    	else if (key.equals(ForgeRegistries.Keys.ITEMS))
-	    		ModItems.register(event.getForgeRegistry());
-	    	else if (key.equals(ForgeRegistries.Keys.BLOCK_ENTITY_TYPES))
-	    		ModTileEntities.register(event.getForgeRegistry());
-	    }
+			if (key.equals(ForgeRegistries.Keys.BLOCKS))
+				ModBlocks.register(event.getForgeRegistry());
+			else if (key.equals(ForgeRegistries.Keys.ITEMS))
+				ModItems.register(event.getForgeRegistry());
+			else if (key.equals(ForgeRegistries.Keys.BLOCK_ENTITY_TYPES))
+				ModTileEntities.register(event.getForgeRegistry());
+		}
 
-	    @SubscribeEvent
-	    public static void onCreativeTab(BuildCreativeModeTabContentsEvent event)
-	    {
-	    	ModItems.setupTabs(event);
-	    }
+		@SubscribeEvent
+		public static void onCreativeTab(BuildCreativeModeTabContentsEvent event)
+		{
+			ModItems.setupTabs(event);
+		}
 	}
 
 	@Mod.EventBusSubscriber(bus = Bus.FORGE)
@@ -82,9 +81,9 @@ public class Main
 		}
 
 		@SubscribeEvent
-	    public static void onCommand(RegisterCommandsEvent event)
-	    {
-	    	ClaimsCommand.register(event.getDispatcher());
-	    }
+		public static void onCommand(RegisterCommandsEvent event)
+		{
+			ClaimsCommand.register(event.getDispatcher());
+		}
 	}
 }

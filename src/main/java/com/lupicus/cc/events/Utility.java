@@ -25,6 +25,6 @@ public class Utility
 	public static void slotChanged(ServerPlayer player, int index, ItemStack itemstack)
 	{
 		InventoryMenu menu = player.inventoryMenu;
-    	player.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), index, itemstack));
+		player.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), index, itemstack));
 	}
 }

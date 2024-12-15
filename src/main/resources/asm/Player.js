@@ -1,6 +1,5 @@
 var asmapi = Java.type('net.minecraftforge.coremod.api.ASMAPI')
 var opc = Java.type('org.objectweb.asm.Opcodes')
-var AbstractInsnNode = Java.type('org.objectweb.asm.tree.AbstractInsnNode')
 var JumpInsnNode = Java.type('org.objectweb.asm.tree.JumpInsnNode')
 var VarInsnNode = Java.type('org.objectweb.asm.tree.VarInsnNode')
 
@@ -29,7 +28,7 @@ function initializeCoreMod() {
     }
 }
 
-// add conditional return
+// add cancelEntityAttack call
 function patch_attack(obj) {
 	var fn = "distanceToSqr"
 	var node = asmapi.findFirstMethodCall(obj, asmapi.MethodType.VIRTUAL, "net/minecraft/world/entity/player/Player", fn, "(Lnet/minecraft/world/entity/Entity;)D")
@@ -48,7 +47,7 @@ function patch_attack(obj) {
 			obj.instructions.insert(node, list)
 		}
 		else
-			asmapi.log("ERROR", "Failed to modify Player: call is different")
+			asmapi.log("ERROR", "Failed to modify Player: code is different")
 	}
 	else
 		asmapi.log("ERROR", "Failed to modify Player: call not found")
