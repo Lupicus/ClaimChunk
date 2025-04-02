@@ -11,6 +11,7 @@ import com.lupicus.cc.manager.ClaimManager;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup.Provider;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -36,18 +37,16 @@ public class ClaimTileEntity extends BlockEntity
 	@Override
 	public void loadAdditional(CompoundTag nbt, Provider hp) {
 		super.loadAdditional(nbt, hp);
-		if (nbt.hasUUID("Owner"))
-			owner = nbt.getUUID("Owner");
-		setAccess(nbt.getString("AccessList"));
-		setModify(nbt.getString("ModifyList"));
+		owner = nbt.read("Owner", UUIDUtil.CODEC).orElse(null);
+		setAccess(nbt.getStringOr("AccessList", ""));
+		setModify(nbt.getStringOr("ModifyList", ""));
 		enabled = getBlockState().getValue(ClaimBlock.ENABLED);
 	}
 
 	@Override
 	protected void saveAdditional(CompoundTag compound, Provider hp) {
 		super.saveAdditional(compound, hp);
-		if (owner != null)
-			compound.putUUID("Owner", owner);
+		compound.storeNullable("Owner", UUIDUtil.CODEC, owner);
 		compound.putString("AccessList", accessList);
 		compound.putString("ModifyList", modifyList);
 	}

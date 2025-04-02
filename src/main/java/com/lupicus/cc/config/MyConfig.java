@@ -66,9 +66,12 @@ public class MyConfig
 	@SubscribeEvent
 	public static void onModConfigEvent(final ModConfigEvent configEvent)
 	{
+		if (configEvent instanceof ModConfigEvent.Unloading)
+			return;
 		if (configEvent.getConfig().getSpec() == MyConfig.COMMON_SPEC)
 		{
-			bakeConfig();
+			if (MyConfig.COMMON_SPEC.isLoaded())
+				bakeConfig();
 		}
 	}
 

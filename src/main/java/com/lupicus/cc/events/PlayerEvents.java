@@ -110,7 +110,7 @@ public class PlayerEvents
 				ItemStack itemstack = player.getItemInHand(h);
 				if (!itemstack.isEmpty())
 				{
-					int index = 36 + ((h == InteractionHand.MAIN_HAND) ? sp.getInventory().selected : 9);
+					int index = 36 + ((h == InteractionHand.MAIN_HAND) ? sp.getInventory().getSelectedSlot() : 9);
 					Utility.slotChanged(sp, index, itemstack);
 				}
 			}

@@ -1,0 +1,17 @@
+{
+	"item.cc.claim_block": "索赔块",
+	"block.cc.claim_block": "索赔块",
+	"cc.lore.paper": "索赔文件",
+	"cc.message.block.not_owner": "你不拥有这个块",
+	"cc.message.block.access": "您无法访问",
+	"cc.message.spawn": "这个块太接近产卵了",
+	"cc.message.claim_limit": "您达到了索赔限额",
+	"cc.message.claim": "你声称这部分",
+	"cc.message.unclaim": "你无人认领",
+	"cc.message.claimed.chunk": "据称这部分",
+	"cc.message.noclaims.you": "你没有索赔",
+	"cc.message.noclaims": "没有索赔",
+	"cc.gui.access": "使用权",
+	"cc.gui.modify": "调整",
+	"cc.gui.enable": "使能够"
+}

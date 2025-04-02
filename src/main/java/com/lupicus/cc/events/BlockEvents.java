@@ -175,8 +175,8 @@ public class BlockEvents
 			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
 			event.setCanceled(true);
 			BlockEntity te = world.getBlockEntity(event.getPos());
-			if (te != null)
-				Clearable.tryClear(te);
+			if (te instanceof Clearable)
+				((Clearable) te).clearContent();
 			Utility.updateHands((ServerPlayer) player);
 		}
 	}

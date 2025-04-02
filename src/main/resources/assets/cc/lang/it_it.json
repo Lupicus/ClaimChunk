@@ -1,0 +1,17 @@
+{
+	"item.cc.claim_block": "Blocco di reclamo",
+	"block.cc.claim_block": "Blocco di reclamo",
+	"cc.lore.paper": "Documento di reclamo",
+	"cc.message.block.not_owner": "Non possiedi questo blocco",
+	"cc.message.block.access": "Non hai accesso",
+	"cc.message.spawn": "Questo pezzo è troppo vicino a spawn",
+	"cc.message.claim_limit": "Hai raggiunto il limite di reclamo",
+	"cc.message.claim": "Hai rivendicato questo pezzo",
+	"cc.message.unclaim": "Non hai reclamato questo pezzo",
+	"cc.message.claimed.chunk": "Questo pezzo è stato rivendicato",
+	"cc.message.noclaims.you": "Non hai affermazioni",
+	"cc.message.noclaims": "Nessuna affermazione",
+	"cc.gui.access": "Accesso",
+	"cc.gui.modify": "Modificare",
+	"cc.gui.enable": "Abilitare"
+}

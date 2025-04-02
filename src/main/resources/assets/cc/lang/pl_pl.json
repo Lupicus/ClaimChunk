@@ -1,0 +1,17 @@
+{
+	"item.cc.claim_block": "Blok roszczenia",
+	"block.cc.claim_block": "Blok roszczenia",
+	"cc.lore.paper": "Dokument roszczenia",
+	"cc.message.block.not_owner": "Nie masz tego bloku",
+	"cc.message.block.access": "Nie masz dostępu",
+	"cc.message.spawn": "Ten kawałek jest zbyt blisko, aby się odrodzić",
+	"cc.message.claim_limit": "Osiągnąłeś limit roszczeń",
+	"cc.message.claim": "Twierdziłeś, że ten kawałek",
+	"cc.message.unclaim": "Nieodgonałeś tego kawałka",
+	"cc.message.claimed.chunk": "Ten kawałek został zgłoszony",
+	"cc.message.noclaims.you": "Nie masz roszczeń",
+	"cc.message.noclaims": "Brak roszczeń",
+	"cc.gui.access": "Dostęp",
+	"cc.gui.modify": "Modyfikować",
+	"cc.gui.enable": "Włączać"
+}

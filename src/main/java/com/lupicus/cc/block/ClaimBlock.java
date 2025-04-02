@@ -111,9 +111,9 @@ public class ClaimBlock extends Block implements EntityBlock
 					if (data != null && data.contains(DATA_TAG))
 					{
 						@SuppressWarnings("deprecation")
-						CompoundTag tag = data.getUnsafe().getCompound(DATA_TAG);
-						cte.setAccess(tag.getString(ACCESS_LIST));
-						cte.setModify(tag.getString(MODIFY_LIST));
+						CompoundTag tag = data.getUnsafe().getCompoundOrEmpty(DATA_TAG);
+						cte.setAccess(tag.getStringOr(ACCESS_LIST, ""));
+						cte.setModify(tag.getStringOr(MODIFY_LIST, ""));
 						cte.setChanged();
 						return InteractionResult.SUCCESS;
 					}
@@ -271,8 +271,8 @@ public class ClaimBlock extends Block implements EntityBlock
 			{
 				@SuppressWarnings("deprecation")
 				CompoundTag tag = data.getUnsafe();
-				cte.setAccess(tag.getString(ACCESS_LIST));
-				cte.setModify(tag.getString(MODIFY_LIST));
+				cte.setAccess(tag.getStringOr(ACCESS_LIST, ""));
+				cte.setModify(tag.getStringOr(MODIFY_LIST, ""));
 			}
 			cte.setChanged();
 			if (cinfo.owner != null)
