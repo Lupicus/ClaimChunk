@@ -1,22 +1,17 @@
 package com.lupicus.cc.network;
 
+import net.minecraft.network.codec.StreamCodec;
+
 public class Register
 {
 	public static void initPackets()
 	{
-	    Network.registerMessage(ClaimUpdatePacket.class,
-	    		ClaimUpdatePacket::writePacketData,
-	    		ClaimUpdatePacket::readPacketData,
-	    		ClaimUpdatePacket::processPacket);
-
-	    Network.registerMessage(ClaimScreenPacket.class,
-	    		ClaimScreenPacket::writePacketData,
-	    		ClaimScreenPacket::readPacketData,
-	    		ClaimScreenPacket::processPacket);
-
-	    Network.registerMessage(ChangeBlockPacket.class,
-	    		ChangeBlockPacket::writePacketData,
-	    		ChangeBlockPacket::readPacketData,
-	    		ChangeBlockPacket::processPacket);
+		Network.INSTANCE.play()
+			.serverbound()
+				.add(ClaimUpdatePacket.class, StreamCodec.ofMember(ClaimUpdatePacket::encode, ClaimUpdatePacket::decode), ClaimUpdatePacket::processPacket)
+			.clientbound()
+				.add(ClaimScreenPacket.class, StreamCodec.ofMember(ClaimScreenPacket::encode, ClaimScreenPacket::decode), ClaimScreenPacket::processPacket)
+				.add(ChangeBlockPacket.class, StreamCodec.ofMember(ChangeBlockPacket::encode, ChangeBlockPacket::decode), ChangeBlockPacket::processPacket)
+			.build();
 	}
 }

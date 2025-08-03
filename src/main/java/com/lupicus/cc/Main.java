@@ -16,7 +16,7 @@ import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig;
@@ -32,7 +32,7 @@ public class Main
 
 	public Main(FMLJavaModLoadingContext context)
 	{
-		context.getModEventBus().register(this);
+		FMLCommonSetupEvent.getBus(context.getModBusGroup()).addListener(this::setup);
 		context.registerConfig(ModConfig.Type.COMMON, MyConfig.COMMON_SPEC);
 	}
 

@@ -18,6 +18,8 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class ClaimTileEntity extends BlockEntity
 {
@@ -35,20 +37,20 @@ public class ClaimTileEntity extends BlockEntity
 	}
 
 	@Override
-	public void loadAdditional(CompoundTag nbt, Provider hp) {
-		super.loadAdditional(nbt, hp);
-		owner = nbt.read("Owner", UUIDUtil.CODEC).orElse(null);
-		setAccess(nbt.getStringOr("AccessList", ""));
-		setModify(nbt.getStringOr("ModifyList", ""));
+	public void loadAdditional(ValueInput input) {
+		super.loadAdditional(input);
+		owner = input.read("Owner", UUIDUtil.CODEC).orElse(null);
+		setAccess(input.getStringOr("AccessList", ""));
+		setModify(input.getStringOr("ModifyList", ""));
 		enabled = getBlockState().getValue(ClaimBlock.ENABLED);
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag compound, Provider hp) {
-		super.saveAdditional(compound, hp);
-		compound.storeNullable("Owner", UUIDUtil.CODEC, owner);
-		compound.putString("AccessList", accessList);
-		compound.putString("ModifyList", modifyList);
+	protected void saveAdditional(ValueOutput output) {
+		super.saveAdditional(output);
+		output.storeNullable("Owner", UUIDUtil.CODEC, owner);
+		output.putString("AccessList", accessList);
+		output.putString("ModifyList", modifyList);
 	}
 
 	@Override
@@ -130,9 +132,9 @@ public class ClaimTileEntity extends BlockEntity
 	}
 
 	@Override
-	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, Provider hp) {
+	public void onDataPacket(Connection net, ValueInput input, Provider hp) {
 		if (level == null)
 			return;
-		super.onDataPacket(net, pkt, hp);
+		super.onDataPacket(net, input, hp);
 	}
 }

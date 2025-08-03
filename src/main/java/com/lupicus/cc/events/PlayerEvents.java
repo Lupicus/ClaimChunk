@@ -46,8 +46,8 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteractSpecific;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.Priority;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 
@@ -74,105 +74,94 @@ public class PlayerEvents
 		return true;
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onRightClick(RightClickBlock event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onRightClick(RightClickBlock event)
 	{
 		Player player = event.getEntity();
 		Level world = player.level();
 		if (world.isClientSide)
-			return;
+			return false;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
-			return;
+			return false;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) te;
 			if (cte.grantAccess(player))
-				return;
+				return false;
 		}
 		BlockState state = world.getBlockState(event.getPos());
 		if (MyConfig.bypassBlocks.contains(state.getBlock()))
-			return;
+			return false;
 		InteractionHand h = event.getHand();
 		if (h == InteractionHand.MAIN_HAND)
 			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.block.access", info), true);
-		if (event.isCancelable())
+		ServerPlayer sp = (ServerPlayer) player;
+		if (sp.connection != null)
 		{
-			event.setCanceled(true);
-			ServerPlayer sp = (ServerPlayer) player;
-			if (sp.connection != null)
+			// fix client side view of some blocks (e.g. door)
+			if (!state.canOcclude())
+				Network.sendToClient(new ChangeBlockPacket(event.getPos(), state), sp);
+			// fix client side view of the hotbar for non creative
+			ItemStack itemstack = player.getItemInHand(h);
+			if (!itemstack.isEmpty())
 			{
-				// fix client side view of some blocks (e.g. door)
-				if (!state.canOcclude())
-					Network.sendToClient(new ChangeBlockPacket(event.getPos(), state), sp);
-				// fix client side view of the hotbar for non creative
-				ItemStack itemstack = player.getItemInHand(h);
-				if (!itemstack.isEmpty())
-				{
-					int index = 36 + ((h == InteractionHand.MAIN_HAND) ? sp.getInventory().getSelectedSlot() : 9);
-					Utility.slotChanged(sp, index, itemstack);
-				}
+				int index = 36 + ((h == InteractionHand.MAIN_HAND) ? sp.getInventory().getSelectedSlot() : 9);
+				Utility.slotChanged(sp, index, itemstack);
 			}
 		}
+		return true;
 	}
 
 	/** for non living entities */
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onAttack(AttackEntityEvent event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onAttack(AttackEntityEvent event)
 	{
 		Entity entity = event.getTarget();
 		if (entity instanceof LivingEntity)
-			return;
+			return false;
 		Level world = entity.level();
 		if (world.isClientSide)
-			return;
+			return false;
 		Player player = event.getEntity();
 		ClaimInfo info = ClaimManager.get(world, entity.blockPosition());
 		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
-			return;
+			return false;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) te;
 			if (cte.grantModify(player))
-				return;
+				return false;
 		}
-		if (event.isCancelable())
-		{
-			event.setCanceled(true);
-			return;
-		}
+		return true;
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onAttack(LivingAttackEvent event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onAttack(LivingAttackEvent event)
 	{
 		LivingEntity entity = event.getEntity();
 		if (entity.getSoundSource() == SoundSource.HOSTILE || entity instanceof Player)
-			return;
+			return false;
 		Level world = entity.level();
 		if (world.isClientSide)
-			return;
+			return false;
 		Entity srcEntity = event.getSource().getEntity();
 		if (!(srcEntity instanceof Player))
-			return;
+			return false;
 		Player player = (Player) srcEntity;
 		ClaimInfo info = ClaimManager.get(world, entity.blockPosition());
 		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
-			return;
+			return false;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) te;
 			if (cte.grantModify(player))
-				return;
+				return false;
 		}
-		if (event.isCancelable())
-		{
-			event.setCanceled(true);
-			return;
-		}
+		return true;
 	}
 
 	/** player sword sweeping */
@@ -261,60 +250,48 @@ public class PlayerEvents
 	}
 
 	/** to handle armor stand but all entities come thru here first */
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onInteractAt(EntityInteractSpecific event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onInteractAt(EntityInteractSpecific event)
 	{
 		Player player = event.getEntity();
 		Level world = player.level();
 		if (world.isClientSide)
-			return;
+			return false;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
-			return;
+			return false;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) te;
 			if (cte.grantAccess(player))
-				return;
+				return false;
 		}
-		if (MyConfig.bypassEntities.contains(event.getTarget().getType()))
-			return;
-		if (event.isCancelable())
-		{
-			event.setCanceled(true);
-			return;
-		}
+		return !MyConfig.bypassEntities.contains(event.getTarget().getType());
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onInteract(EntityInteract event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onInteract(EntityInteract event)
 	{
 		Player player = event.getEntity();
 		Level world = player.level();
 		if (world.isClientSide)
-			return;
+			return false;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
-			return;
+			return false;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) te;
 			if (cte.grantAccess(player))
-				return;
+				return false;
 		}
-		if (MyConfig.bypassEntities.contains(event.getTarget().getType()))
-			return;
-		if (event.isCancelable())
-		{
-			event.setCanceled(true);
-			return;
-		}
+		return !MyConfig.bypassEntities.contains(event.getTarget().getType());
 	}
 
 	@SubscribeEvent
-	public static void onBucket(FillBucketEvent event)
+	public static boolean onBucket(FillBucketEvent event)
 	{
 		HitResult target = event.getTarget();
 		if (target.getType() == HitResult.Type.BLOCK)
@@ -322,7 +299,7 @@ public class PlayerEvents
 			Player player = event.getEntity();
 			Level world = player.level();
 			if (world.isClientSide)
-				return;
+				return false;
 			BlockHitResult blockray = (BlockHitResult) target;
 			BlockPos blockpos = blockray.getBlockPos();
 			Fluid fluid = null;
@@ -375,15 +352,13 @@ public class PlayerEvents
 			{
 				if (fluid != Fluids.EMPTY && MyConfig.reportBucket)
 					LOGGER.info("Placing " + stack + " @ " + world.dimension().location() + " " + blockpos + " by " + player.getName().getString());
-				return;
+				return false;
 			}
 			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
-			if (event.isCancelable())
-			{
-				event.setCanceled(true);
-				Utility.updateHands((ServerPlayer) player);
-			}
+			Utility.updateHands((ServerPlayer) player);
+			return true;
 		}
+		return false;
 	}
 
 	@SubscribeEvent

@@ -36,6 +36,7 @@ import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.util.BlockSnapshot;
+import net.minecraftforge.common.util.Result;
 import net.minecraftforge.event.level.BlockEvent.BreakEvent;
 import net.minecraftforge.event.level.BlockEvent.EntityMultiPlaceEvent;
 import net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent;
@@ -44,47 +45,45 @@ import net.minecraftforge.event.level.BlockEvent.FluidPlaceBlockEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.event.level.PistonEvent;
 import net.minecraftforge.event.level.PistonEvent.PistonMoveType;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.Priority;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 
 @Mod.EventBusSubscriber(bus = Bus.FORGE, modid = Main.MODID)
 public class BlockEvents
 {
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onBreakBlock(BreakEvent event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onBreakBlock(BreakEvent event)
 	{
 		Player player = event.getPlayer();
 		Level world = player.level();
 		if (world.isClientSide)
-			return;
+			return false;
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
-			return;
+			return false;
 		BlockEntity te = world.getBlockEntity(info.pos.pos());
 		if (te instanceof ClaimTileEntity)
 		{
 			ClaimTileEntity cte = (ClaimTileEntity) te;
 			if (cte.grantModify(player))
-				return;
+				return false;
 		}
 		player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
-		if (event.isCancelable())
+		ServerPlayer sp = (ServerPlayer) player;
+		if (sp.connection != null)
 		{
-			event.setCanceled(true);
-			ServerPlayer sp = (ServerPlayer) player;
-			if (sp.connection != null)
-			{
-				// fix client side view of some blocks (e.g. redstone wire)
-				BlockState state = event.getState();
-				if (!state.canOcclude())
-					Network.sendToClient(new ChangeBlockPacket(event.getPos(), state), sp);
-			}
+			// fix client side view of some blocks (e.g. redstone wire)
+			BlockState state = event.getState();
+			if (!state.canOcclude())
+				Network.sendToClient(new ChangeBlockPacket(event.getPos(), state), sp);
 		}
+		event.setResult(Result.DENY);
+		return true;
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGH)
+	@SubscribeEvent(priority = Priority.HIGH)
 	public static void onExplosionDetonate(ExplosionEvent.Detonate event)
 	{
 		Level world = event.getLevel();
@@ -147,19 +146,19 @@ public class BlockEvents
 		}
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onPlaceEvent(EntityPlaceEvent event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onPlaceEvent(EntityPlaceEvent event)
 	{
 		if (event instanceof EntityMultiPlaceEvent)
-			return;
+			return false;
 		Entity entity = event.getEntity();
 		if (!(entity instanceof Player))
-			return;
+			return false;
 		Player player = (Player) entity;
 		Level world = player.level();
 		ClaimInfo info = ClaimManager.get(world, event.getPos());
 		if (info.okPerm(player) || (player.hasPermissions(3) && player.isCreative()))
-			return;
+			return false;
 		if (event.getPlacedBlock().getBlock() != ModBlocks.CLAIM_BLOCK)
 		{
 			BlockEntity te = world.getBlockEntity(info.pos.pos());
@@ -167,26 +166,23 @@ public class BlockEvents
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
 				if (cte.grantModify(player))
-					return;
+					return false;
 			}
 		}
-		if (event.isCancelable())
-		{
-			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
-			event.setCanceled(true);
-			BlockEntity te = world.getBlockEntity(event.getPos());
-			if (te instanceof Clearable)
-				((Clearable) te).clearContent();
-			Utility.updateHands((ServerPlayer) player);
-		}
+		player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
+		BlockEntity te = world.getBlockEntity(event.getPos());
+		if (te instanceof Clearable)
+			((Clearable) te).clearContent();
+		Utility.updateHands((ServerPlayer) player);
+		return true;
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onPlaceEvent(EntityMultiPlaceEvent event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onPlaceEvent(EntityMultiPlaceEvent event)
 	{
 		Entity entity = event.getEntity();
 		if (!(entity instanceof Player))
-			return;
+			return false;
 		Player player = (Player) entity;
 		Level world = player.level();
 		boolean flag = false;
@@ -212,20 +208,21 @@ public class BlockEvents
 				break;
 			}
 		}
-		if (flag && event.isCancelable())
+		if (flag)
 		{
 			player.displayClientMessage(ClaimBlock.makeMsg("cc.message.claimed.chunk", info), true);
-			event.setCanceled(true);
 			Utility.updateHands((ServerPlayer) player);
+			return true;
 		}
+		return false;
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onTrample(FarmlandTrampleEvent event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onTrample(FarmlandTrampleEvent event)
 	{
 		LevelAccessor iworld = event.getLevel();
 		if (iworld.isClientSide())
-			return;
+			return false;
 		Entity entity = event.getEntity();
 		if (iworld instanceof Level && entity instanceof Player)
 		{
@@ -233,17 +230,17 @@ public class BlockEvents
 			Level world = (Level) iworld;
 			ClaimInfo info = ClaimManager.get(world, event.getPos());
 			if (info.okPerm(player))
-				return;
+				return false;
 			BlockEntity te = world.getBlockEntity(info.pos.pos());
 			if (te instanceof ClaimTileEntity)
 			{
 				ClaimTileEntity cte = (ClaimTileEntity) te;
 				if (cte.grantModify(player))
-					return;
+					return false;
 			}
-			if (event.isCancelable())
-				event.setCanceled(true);
+			return true;
 		}
+		return false;
 	}
 
 	@SubscribeEvent
@@ -345,15 +342,15 @@ public class BlockEvents
 		return flag;
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onPiston(PistonEvent.Pre event)
+	@SubscribeEvent(priority = Priority.HIGH)
+	public static boolean onPiston(PistonEvent.Pre event)
 	{
 		LevelAccessor iworld = event.getLevel();
 		if (iworld.isClientSide())
-			return;
+			return false;
 		PistonStructureResolver helper = event.getStructureHelper();
 		if (helper == null)
-			return;
+			return false;
 		// when retracting the blocks might not include all of them
 		@SuppressWarnings("unused")
 		boolean moveFlag = helper.resolve();
@@ -389,15 +386,15 @@ public class BlockEvents
 					list3.add(b.relative(ydir));
 			}
 		}
-		Level world = (Level) iworld;
 		ChunkPos cpos = new ChunkPos(pos);
 		Set<ChunkPos> check = new HashSet<>();
 		addBlocks(cpos, check, list1);
 		addBlocks(cpos, check, list2);
 		addBlocks(cpos, check, list3);
-		if (!check.isEmpty())
+		if (check.isEmpty())
 		{
 			boolean flag = false;
+			Level world = (Level) iworld;
 			ClaimInfo pinfo = ClaimManager.get(world, cpos);
 			for (ChunkPos e : check)
 			{
@@ -418,9 +415,9 @@ public class BlockEvents
 					break;
 				}
 			}
-			if (flag && event.isCancelable())
-				event.setCanceled(true);
+			return flag;
 		}
+		return false;
 	}
 
 	private static void addBlocks(ChunkPos pos, Set<ChunkPos> check, List<BlockPos> list)

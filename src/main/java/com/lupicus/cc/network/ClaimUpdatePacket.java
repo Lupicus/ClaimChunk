@@ -52,7 +52,7 @@ public class ClaimUpdatePacket
 		}
 	}
 
-	public static ClaimUpdatePacket readPacketData(FriendlyByteBuf buf)
+	public static ClaimUpdatePacket decode(FriendlyByteBuf buf)
 	{
 		int cmd = buf.readByte();
 		BlockPos pos = buf.readBlockPos();
@@ -61,11 +61,6 @@ public class ClaimUpdatePacket
 		else if (cmd == 2)
 			return new ClaimUpdatePacket(pos, buf.readUtf(32767), buf.readUtf(32767));
 		return new ClaimUpdatePacket(pos);
-	}
-
-	public static void writePacketData(ClaimUpdatePacket msg, FriendlyByteBuf buf)
-	{
-		msg.encode(buf);
 	}
 
 	@SuppressWarnings("deprecation")

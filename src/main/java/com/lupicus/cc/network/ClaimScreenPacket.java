@@ -21,17 +21,12 @@ public class ClaimScreenPacket
 		buf.writeBlockPos(pos);
 	}
 
-	public static ClaimScreenPacket readPacketData(FriendlyByteBuf buf)
+	public static ClaimScreenPacket decode(FriendlyByteBuf buf)
 	{
 		@SuppressWarnings("unused")
 		int cmd = buf.readByte();
 		BlockPos pos = buf.readBlockPos();
 		return new ClaimScreenPacket(pos);
-	}
-
-	public static void writePacketData(ClaimScreenPacket msg, FriendlyByteBuf buf)
-	{
-		msg.encode(buf);
 	}
 
 	public static void processPacket(ClaimScreenPacket message, Context ctx)

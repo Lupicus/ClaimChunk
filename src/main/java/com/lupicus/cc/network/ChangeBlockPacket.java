@@ -23,16 +23,11 @@ public class ChangeBlockPacket
 		buf.writeVarInt(Block.getId(state));
 	}
 
-	public static ChangeBlockPacket readPacketData(FriendlyByteBuf buf)
+	public static ChangeBlockPacket decode(FriendlyByteBuf buf)
 	{
 		BlockPos pos = buf.readBlockPos();
 		BlockState state = Block.stateById(buf.readVarInt());
 		return new ChangeBlockPacket(pos, state);
-	}
-
-	public static void writePacketData(ChangeBlockPacket msg, FriendlyByteBuf buf)
-	{
-		msg.encode(buf);
 	}
 
 	public static void processPacket(ChangeBlockPacket message, Context ctx)
